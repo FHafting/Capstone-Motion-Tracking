@@ -1,6 +1,6 @@
 <h1> Sample Code/Files in Development </h1>
 <p>
-November 22: Added 10mz timer code for ESP32<br>
+November 22: Added 100Hz timer code for ESP32<br>
 - Need to send printed timer values onto a char variable<br>
 November 22: Added Sample ESP32 RX and ESP32 TX Code<br>
 - Need to figure out a way to send more data than uint8_t<br>
