@@ -14,7 +14,6 @@ unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 int interval = 10;
 int counter = 0;
-struct tm timeinfo;
 int temp = 0;
 int temp2 = 0;
 int sec1 = 0;
@@ -42,8 +41,13 @@ void setup()
   // WiFi.mode(WIFI_OFF);
 }
 
+char time[50];
+struct tm timeinfo;
+
 void loop()
 {
+
+  
   currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
   {
@@ -65,17 +69,34 @@ void loop()
     }
     else
     {
-      Serial.printf("%d:%d:%d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+      /*
+      int tm_sec;
+      int tm_min;
+      int tm_hour;
+      int tm_mday;
+      int tm_mon;
+      int tm_year;
+      int tm_wday;
+      int tm_yday;
+      int tm_isdst;
+      */
+      sprintf(time, "%d:%d:%d:%d", timeinfo.tm_mday,timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+      // Serial.printf("%d:%d:%d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
       if (counter < 10)
       {
-        Serial.printf("00");
+        // Serial.printf("00");
+        strcat(time, "00");
       }
       else if (counter < 100)
       {
-        Serial.printf("0");
+        // Serial.printf("0");
+        strcat(time, "0");
       }
-      Serial.printf("%d\n", counter);
-
+      char temp[10];
+      sprintf(temp, "%d", counter);
+      strcat(time, temp);
+      // Serial.printf("%d\n", counter);
+      
       counter = counter + interval;
       if (counter == 1000)
       {
@@ -84,4 +105,5 @@ void loop()
       previousMillis = currentMillis;
     }
   }
+  Serial.println(time);
 }
