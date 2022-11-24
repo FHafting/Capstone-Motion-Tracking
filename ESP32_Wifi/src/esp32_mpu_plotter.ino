@@ -121,8 +121,12 @@ void setup()
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/index.html"); });
-  server.on("/mpuVal", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/accelx", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", mpuRead(0).c_str()); });
+            server.on("/accely", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(200, "text/plain", mpuRead(1).c_str()); });
+            server.on("/accelz", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(200, "text/plain", mpuRead(2).c_str()); });
 
   // Start server
   server.begin();
