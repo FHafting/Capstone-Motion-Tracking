@@ -8,8 +8,8 @@ November 23: Timer values are now stored in a char variable<br>
 <br><br>
 
 
-<h2>Communication Between ESP32 RX and ESP32 RXTX</h2>
-November 22: Added Sample ESP32 RX and ESP32 RXTX Code<br>
+<h2>Communication Between ESP32 TX and ESP32 RXTX</h2>
+November 22: Added Sample ESP32 TX and ESP32 RXTX Code<br>
 - Need to figure out a way to send more data than uint8_t<br>
 
 </p>
