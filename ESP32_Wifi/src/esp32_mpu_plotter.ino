@@ -1,5 +1,5 @@
 #include "headers.h"
-//#include "functions.h"
+// #include "functions.h"
 
 // Replace with your network credentials
 const char *ssidSTA = "CANADIAN WINTER BELL";
@@ -99,16 +99,27 @@ void spiffsSetup()
 void wifiSetup()
 {
   // Connect to Wi-Fi
-  // WiFi.softAP(ssidAP, passwordAP);
-  WiFi.begin(ssidSTA, passwordSTA);
-  while (WiFi.status() != WL_CONNECTED)
+  int connectionMode = 1;
+
+  if (connectionMode == 1)
   {
-    delay(100);
-    Serial.println("Connecting to WiFi..");
+    WiFi.softAP(ssidAP, passwordAP);
+    Serial.println(WiFi.softAPIP());
   }
-  // Print ESP32 Local IP Address
-  Serial.println(WiFi.localIP());
-  // Serial.println(WiFi.softAPIP());
+  else
+  {
+
+    WiFi.begin(ssidSTA, passwordSTA);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      delay(100);
+      Serial.println("Connecting to WiFi..");
+    }
+    // Print ESP32 Local IP Address
+    Serial.println(WiFi.localIP());
+  }
+
+  
 }
 
 void setup()
@@ -123,9 +134,9 @@ void setup()
             { request->send(SPIFFS, "/index.html"); });
   server.on("/accelx", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", mpuRead(0).c_str()); });
-            server.on("/accely", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/accely", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", mpuRead(1).c_str()); });
-            server.on("/accelz", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/accelz", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", mpuRead(2).c_str()); });
 
   // Start server

@@ -1,10 +1,9 @@
 #include <Arduino.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <WiFi.h>
 #include "time.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 const char *ssid = "CANADIAN WINTER BELL";
 const char *password = "Shivam1912__";
@@ -19,6 +18,7 @@ int interval = 10;
 int counter = 0;
 int temp = 0;
 int temp2 = 0;
+int temp3 = 0;
 int sec1 = 0;
 int sec2 = 0;
 
@@ -38,27 +38,32 @@ void setup()
 
   // init and get the time
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-
-  // disconnect WiFi as it's no longer needed
-  // WiFi.disconnect(true);
-  // WiFi.mode(WIFI_OFF);
 }
 
 char time1[50];
-struct tm timeinfo;
 char temp4[10];
+unsigned long int timeFromServer;
+unsigned long int timeFromMcu;
+struct tm timeinfo;
+struct tm timeinfo2;
+unsigned long int drift;
+int i = 0;
+
 void loop()
 {
 
-  
   currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
   {
+    previousMillis = currentMillis;
+    i = i + 1;
+
     if (!getLocalTime(&timeinfo))
     {
       Serial.println("Failed to obtain time");
       return;
     }
+    // time alignment with the MCU counter (to count 10 ms increments between the time pulled from the server)
     if (temp == 0)
     {
       sec2 = timeinfo.tm_sec + 1;
@@ -70,35 +75,29 @@ void loop()
       counter = 0;
       temp2 = 1;
     }
-    else
+    if(temp2==1)
     {
-      /*
-      int tm_sec;
-      int tm_min;
-      int tm_hour;
-      int tm_mday;
-      int tm_mon;
-      int tm_year;
-      int tm_wday;
-      int tm_yday;
-      int tm_isdst;
-      */
-      sprintf(time1, "%d:%d:%d:%d", timeinfo.tm_mday,timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-      // Serial.printf("%d:%d:%d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-      
-      
-      sprintf(temp4, "%d", counter);
-      strcat(time1, temp4);
-      // Serial.printf("%d\n", counter);
-      
+
       counter = counter + interval;
       if (counter == 1000)
       {
         counter = 0;
       }
-      previousMillis = currentMillis;
+      timeFromServer = (timeinfo.tm_min * 60 + timeinfo.tm_sec) * 1000 + counter;
+      
+      if (i==5000 && temp3 == 0)
+      {
+        timeFromMcu = timeFromServer;
+        temp3 = 1;
+      }
     }
-    Serial.println(time1);
+
+    if (temp3 == 1)
+    {
+      timeFromMcu = timeFromMcu + interval;
+      drift = timeFromServer - timeFromMcu;
+      Serial.println(drift);
+    }
+    
   }
-  
 }
