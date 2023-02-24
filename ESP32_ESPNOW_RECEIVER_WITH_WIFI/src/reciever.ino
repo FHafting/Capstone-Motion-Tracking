@@ -13,7 +13,7 @@ const int packetSize = 10; // amount of sensor readings being sent within each p
 typedef struct struct_message
 {
   int id;
-  String time;
+  unsigned long long int time;
   int accelx[packetSize];
   int accely[packetSize];
   int accelz[packetSize];
@@ -114,6 +114,8 @@ void setup()
             { request->send_P(200, "text/plain", testData1().c_str()); });
   server.on("/test2", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", testData2().c_str()); });
+  server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request)
+            { request->send(200, "text/plain", "Post route"); });
 
   // Start server
   server.begin();

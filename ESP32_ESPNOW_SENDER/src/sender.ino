@@ -1,19 +1,23 @@
 #include "headers.h"
 // #include "functions.h"
 
-const char *ssidAP = "ESP32_Shiv";
-const char *passwordAP = "12345678";
-// Create AsyncWebServer object on port 80
-AsyncWebServer server(80);
+// receiver's mac address
+uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+int mcuID = 1;
+
+// initializing time
 
 const int packetSize = 10; // amount of sensor readings being sent within each packet
-// Must match the sender structure
+//transfer rate = packetSize*10 (ms) - 100ms (current)
+//transfer rate = 1/(packetSize*10/1000) (Hz) - 10Hz (current)
+//keep in mind this still sends data equivalent to 100Hz
 
-// initializing esp now
+
+// Must match the sender structure
 typedef struct struct_message
 {
   int id;
-  String time;
+  unsigned long long int time;
   int accelx[packetSize];
   int accely[packetSize];
   int accelz[packetSize];
@@ -25,46 +29,21 @@ typedef struct struct_message
 // Create a struct_message called myData
 struct_message myData;
 
-// Creating upto 6 esp 32 devices
-struct_message board1;
-struct_message board2;
-struct_message board3;
-struct_message board4;
-struct_message board5;
-struct_message board6;
+// Create peer interface
+esp_now_peer_info_t peerInfo;
 
-// Create an array with all the structures
-struct_message boardsStruct[6] = {board1, board2, board3, board4, board5, board6};
-
-// callback function that will be executed when data is received
-void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
+// callback when data is sent
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  char macStr[18];
-  Serial.print("Packet received from: ");
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.println(macStr);
-  memcpy(&myData, incomingData, sizeof(myData));
-  Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
-  // Update the structures with the new incoming data
-  boardsStruct[myData.id - 1].time = myData.time;
-  Serial.printf("time value: %d \n", boardsStruct[myData.id - 1].time);
-  for (int i = 0; i++; i < packetSize)
-  {
-    boardsStruct[myData.id - 1].accelx[i] = myData.accelx[i];
-    Serial.printf("accelx value%d: %d \n", i, boardsStruct[myData.id - 1].accelx[i]);
-    boardsStruct[myData.id - 1].accely[i] = myData.accely[i];
-    boardsStruct[myData.id - 1].accelz[i] = myData.accelz[i];
-    boardsStruct[myData.id - 1].gyrox[i] = myData.gyrox[i];
-    boardsStruct[myData.id - 1].gyroy[i] = myData.gyroy[i];
-    boardsStruct[myData.id - 1].gyroz[i] = myData.gyroz[i];
-  }
-
-  Serial.println();
+  Serial.print("\r\nLast Packet Send Status:\t");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
-void espNowSetup()
+void setup()
 {
+  // Init Serial Monitor
+  Serial.begin(115200);
+
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
 
@@ -75,58 +54,108 @@ void espNowSetup()
     return;
   }
 
-  // Once ESPNow is successfully Init, we will register for recv CB to
-  // get recv packer info
-  esp_now_register_recv_cb(OnDataRecv);
+  // Once ESPNow is successfully Init, we will register for Send CB to
+  // get the status of Trasnmitted packet
+  esp_now_register_send_cb(OnDataSent);
+
+  // Register peer
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+
+  // Add peer
+  if (esp_now_add_peer(&peerInfo) != ESP_OK)
+  {
+    Serial.println("Failed to add peer");
+    return;
+  }
 }
 
-// wifi setup for wifi transmission
-void wifiSetup()
+// data functions
+// samples sensor values every 10 ms (100 hz refresh rate)
+
+int accelxVal()
 {
-  // Connect to Wi-Fi
-  WiFi.softAP(ssidAP, passwordAP);
-  Serial.println(WiFi.softAPIP());
-}
+  int value;
 
-// establishing functions for data transmission
-String testData1()
+  return value;
+}
+int accelyVal()
 {
-  String test = "Hey this is test set #1";
-  return test;
-}
+  int value;
 
-String testData2()
+  return value;
+}
+int accelzVal()
 {
-  String test = "{\"ESP32 ID\":1,\n\"Sensor ID\":1,\n\"Time\":\"10:0000\",\n\"Value\": 12453.6987}";
-  return test;
-}
+  int value;
 
-void setup()
+  return value;
+}
+int gyroxVal()
 {
-  // Serial port for debugging purposes
-  Serial.begin(115200);
+  int value;
 
-  wifiSetup();
-  espNowSetup();
-
-  // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send_P(200, "text/plain", testData1().c_str()); });
-  server.on("/test2", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send_P(200, "text/plain", testData2().c_str()); });
-
-  // Start server
-  server.begin();
+  return value;
 }
+int gyroyVal()
+{
+  int value;
+
+  return value;
+}
+int gyrozVal()
+{
+  int value;
+
+  return value;
+}
+
+// defining the sample rate for every sensor reading
+unsigned long long cm = 0;
+unsigned long long pm = 0;
+int interval = 10; // 10 ms interval for 100 hz
+int counter = 0;   // variable to sequentially store packets as fixed packet sizes
 
 void loop()
 {
 
-  // Acess the variables for each board
-  /*int board1X = boardsStruct[0].x;
-  int board1Y = boardsStruct[0].y;
-  int board2X = boardsStruct[1].x;
-  int board2Y = boardsStruct[1].y;
-  int board3X = boardsStruct[2].x;
-  int board3Y = boardsStruct[2].y;*/
+  //initialize time
+  if(counter==0){
+    myData.time = 14*60*60*1000+9*60*1000+pm;
+  }
+
+
+  cm = millis();
+  if ((cm - pm) >= interval)
+  {
+    pm = cm;
+    //update data
+    myData.id = mcuID;
+    myData.accelx[counter] = accelxVal();
+    myData.accely[counter] = accelyVal();
+    myData.accelz[counter] = accelzVal();
+    myData.gyrox[counter] = gyroxVal();
+    myData.gyrox[counter] = gyroyVal();
+    myData.gyrox[counter] = gyrozVal();
+    counter++; // incrementing counter within the loop signifying that an interval of 10 ms has passed
+  }
+
+
+//send data via esp now
+  if (counter >= packetSize)
+  {
+    counter = 0;
+    // Send message via ESP-NOW
+    esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
+
+    if (result == ESP_OK)
+    {
+      Serial.println("Sent with success");
+    }
+    else
+    {
+      Serial.println("Error sending the data");
+    }
+  }
 }
