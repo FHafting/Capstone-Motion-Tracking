@@ -18,7 +18,7 @@ typedef struct struct_message
 {
   int id;
   unsigned long long int time;
-  //int accelx[packetSize];
+  int accelx[packetSize];
  // int accely[packetSize];
  // int accelz[packetSize];
  // int gyrox[packetSize];
@@ -132,7 +132,7 @@ void loop()
     pm = cm;
     //update data
     myData.id = mcuID;
-   // myData.accelx[counter] = accelxVal();
+    myData.accelx[counter] = accelxVal();
    // myData.accely[counter] = accelyVal();
    // myData.accelz[counter] = accelzVal();
    // myData.gyrox[counter] = gyroxVal();

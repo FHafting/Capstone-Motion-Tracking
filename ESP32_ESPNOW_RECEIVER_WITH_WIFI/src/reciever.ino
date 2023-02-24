@@ -15,11 +15,11 @@ typedef struct struct_message
   int id;
   unsigned long long int time;
   int accelx[packetSize];
-  int accely[packetSize];
-  int accelz[packetSize];
-  int gyrox[packetSize];
-  int gyroy[packetSize];
-  int gyroz[packetSize];
+  //int accely[packetSize];
+  //int accelz[packetSize];
+  //int gyrox[packetSize];
+ // int gyroy[packetSize];
+  //int gyroz[packetSize];
 } struct_message;
 
 // Create a struct_message called myData
@@ -53,11 +53,11 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
   {
     boardsStruct[myData.id - 1].accelx[i] = myData.accelx[i];
     Serial.printf("accelx value%d: %d \n", i, boardsStruct[myData.id - 1].accelx[i]);
-    boardsStruct[myData.id - 1].accely[i] = myData.accely[i];
-    boardsStruct[myData.id - 1].accelz[i] = myData.accelz[i];
-    boardsStruct[myData.id - 1].gyrox[i] = myData.gyrox[i];
-    boardsStruct[myData.id - 1].gyroy[i] = myData.gyroy[i];
-    boardsStruct[myData.id - 1].gyroz[i] = myData.gyroz[i];
+   // boardsStruct[myData.id - 1].accely[i] = myData.accely[i];
+  //  boardsStruct[myData.id - 1].accelz[i] = myData.accelz[i];
+  //  boardsStruct[myData.id - 1].gyrox[i] = myData.gyrox[i];
+  //  boardsStruct[myData.id - 1].gyroy[i] = myData.gyroy[i];
+  //  boardsStruct[myData.id - 1].gyroz[i] = myData.gyroz[i];
   }
 
   Serial.println();
