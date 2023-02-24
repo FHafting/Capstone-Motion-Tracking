@@ -109,6 +109,9 @@ void setup()
   wifiSetup();
   espNowSetup();
 
+  //print receiver's mac address
+  Serial.println(WiFi.macAddress());
+
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", testData1().c_str()); });

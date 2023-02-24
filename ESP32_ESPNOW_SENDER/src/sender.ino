@@ -1,8 +1,8 @@
 #include "headers.h"
 // #include "functions.h"
 
-// receiver's mac address
-uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+// receiver's mac address 3C:61:05:3D:D3:D8
+uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x3D, 0xD3, 0xD8};
 int mcuID = 1;
 
 // initializing time
@@ -18,12 +18,12 @@ typedef struct struct_message
 {
   int id;
   unsigned long long int time;
-  int accelx[packetSize];
-  int accely[packetSize];
-  int accelz[packetSize];
-  int gyrox[packetSize];
-  int gyroy[packetSize];
-  int gyroz[packetSize];
+  //int accelx[packetSize];
+ // int accely[packetSize];
+ // int accelz[packetSize];
+ // int gyrox[packetSize];
+ // int gyroy[packetSize];
+ // int gyroz[packetSize];
 } struct_message;
 
 // Create a struct_message called myData
@@ -76,37 +76,37 @@ void setup()
 
 int accelxVal()
 {
-  int value;
+  int value=0;
 
   return value;
 }
 int accelyVal()
 {
-  int value;
+  int value=0;
 
   return value;
 }
 int accelzVal()
 {
-  int value;
+  int value=0;
 
   return value;
 }
 int gyroxVal()
 {
-  int value;
+  int value=0;
 
   return value;
 }
 int gyroyVal()
 {
-  int value;
+  int value=0;
 
   return value;
 }
 int gyrozVal()
 {
-  int value;
+  int value=0;
 
   return value;
 }
@@ -132,12 +132,12 @@ void loop()
     pm = cm;
     //update data
     myData.id = mcuID;
-    myData.accelx[counter] = accelxVal();
-    myData.accely[counter] = accelyVal();
-    myData.accelz[counter] = accelzVal();
-    myData.gyrox[counter] = gyroxVal();
-    myData.gyrox[counter] = gyroyVal();
-    myData.gyrox[counter] = gyrozVal();
+   // myData.accelx[counter] = accelxVal();
+   // myData.accely[counter] = accelyVal();
+   // myData.accelz[counter] = accelzVal();
+   // myData.gyrox[counter] = gyroxVal();
+   // myData.gyrox[counter] = gyroyVal();
+   // myData.gyrox[counter] = gyrozVal();
     counter++; // incrementing counter within the loop signifying that an interval of 10 ms has passed
   }
 
