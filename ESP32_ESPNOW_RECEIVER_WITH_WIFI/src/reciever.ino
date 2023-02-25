@@ -6,7 +6,7 @@ const char *passwordAP = "12345678";
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
-const int packetSize = 7; // amount of sensor readings being sent within each packet
+const int packetSize = 9; // amount of sensor readings being sent within each packet
 // Must match the sender structure
 
 // initializing esp now

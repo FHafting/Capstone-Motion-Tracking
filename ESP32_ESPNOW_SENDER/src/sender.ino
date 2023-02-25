@@ -20,6 +20,10 @@ int interval = 10; // 10 ms interval for 100 hz
 int counter = 0;   // variable to sequentially store packets as fixed packet sizes
 
 
+//initializing status led
+int ledPin1 = 2;
+int ledStatus1 = false;
+
 // Must match the sender structure
 typedef struct struct_message
 {
@@ -44,13 +48,28 @@ esp_now_peer_info_t peerInfo;
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
   Serial.print("\r\nLast Packet Send Status:\t");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+
+  if(status== ESP_NOW_SEND_SUCCESS){
+    Serial.println("Delivery Success");
+    toggleLED();
+
+  }else{
+    //turning off LED
+    Serial.println("Delivery Fail");
+      ledStatus1=false;
+      digitalWrite(ledPin1,ledStatus1);
+  }
+
+
+ // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
 void setup()
 {
   // Init Serial Monitor
   Serial.begin(115200);
+  //initialise status led
+  pinMode(ledPin1,OUTPUT);
 
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
@@ -158,10 +177,23 @@ void loop()
     if (result == ESP_OK)
     {
       Serial.println("Sent with success");
+      
     }
     else
     {
       Serial.println("Error sending the data");
+      
     }
   }
+}
+
+
+void toggleLED(){
+  if(ledStatus1==true){
+    ledStatus1=false;
+  }
+  else{
+    ledStatus1=true;
+  }
+  digitalWrite(ledPin1,ledStatus1);
 }
