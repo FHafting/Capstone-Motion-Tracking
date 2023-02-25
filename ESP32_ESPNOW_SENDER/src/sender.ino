@@ -3,27 +3,35 @@
 
 // receiver's mac address 3C:61:05:3D:D3:D8
 uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x3D, 0xD3, 0xD8};
-int mcuID = 1;
+int mcuID = 0;    //id goes from 0 to 5
 
 // initializing time
 
-const int packetSize = 10; // amount of sensor readings being sent within each packet
-//transfer rate = packetSize*10 (ms) - 100ms (current)
-//transfer rate = 1/(packetSize*10/1000) (Hz) - 10Hz (current)
-//keep in mind this still sends data equivalent to 100Hz
+const int packetSize = 1; // amount of sensor readings being sent within each packet
+// transfer rate = packetSize*10 (ms) - 100ms (current)
+// transfer rate = 1/(packetSize*10/1000) (Hz) - 10Hz (current)
+// keep in mind this still sends data equivalent to 100Hz
+
+
+// defining the sample rate for every sensor reading
+unsigned long long cm = 0;
+unsigned long long pm = 0;
+int interval = 1000; // 10 ms interval for 100 hz
+int counter = 0;   // variable to sequentially store packets as fixed packet sizes
 
 
 // Must match the sender structure
 typedef struct struct_message
 {
   int id;
+  boolean status;
   unsigned long long int time;
   int accelx[packetSize];
- // int accely[packetSize];
- // int accelz[packetSize];
- // int gyrox[packetSize];
- // int gyroy[packetSize];
- // int gyroz[packetSize];
+  int accely[packetSize];
+  int accelz[packetSize];
+  int gyrox[packetSize];
+  int gyroy[packetSize];
+  int gyroz[packetSize];
 } struct_message;
 
 // Create a struct_message called myData
@@ -74,75 +82,73 @@ void setup()
 // data functions
 // samples sensor values every 10 ms (100 hz refresh rate)
 
+//replace content of these functions with code for extracting sensor data from IMU
+
 int accelxVal()
 {
-  int value=0;
+  int value = 12345;
 
   return value;
 }
 int accelyVal()
 {
-  int value=0;
+  int value = 121212;
 
   return value;
 }
 int accelzVal()
 {
-  int value=0;
+  int value = 0000000;
 
   return value;
 }
 int gyroxVal()
 {
-  int value=0;
+  int value = 11111111;
 
   return value;
 }
 int gyroyVal()
 {
-  int value=0;
+  int value = 999999999;
 
   return value;
 }
 int gyrozVal()
 {
-  int value=0;
+  int value = 8888888888;
 
   return value;
 }
 
-// defining the sample rate for every sensor reading
-unsigned long long cm = 0;
-unsigned long long pm = 0;
-int interval = 10; // 10 ms interval for 100 hz
-int counter = 0;   // variable to sequentially store packets as fixed packet sizes
+
 
 void loop()
 {
 
-  //initialize time
-  if(counter==0){
-    myData.time = 14*60*60*1000+9*60*1000+pm;
+  // update time and status
+  myData.status=true;
+  if (counter == 0)
+  {
+    myData.time = 14 * 60 * 60 * 1000 + 9 * 60 * 1000 + pm;
   }
-
 
   cm = millis();
   if ((cm - pm) >= interval)
   {
     pm = cm;
-    //update data
+    // update data
     myData.id = mcuID;
     myData.accelx[counter] = accelxVal();
-   // myData.accely[counter] = accelyVal();
-   // myData.accelz[counter] = accelzVal();
-   // myData.gyrox[counter] = gyroxVal();
-   // myData.gyrox[counter] = gyroyVal();
-   // myData.gyrox[counter] = gyrozVal();
+    myData.accely[counter] = accelyVal();
+    myData.accelz[counter] = accelzVal();
+    myData.gyrox[counter] = gyroxVal();
+    myData.gyrox[counter] = gyroyVal();
+    myData.gyrox[counter] = gyrozVal();
     counter++; // incrementing counter within the loop signifying that an interval of 10 ms has passed
   }
 
-
-//send data via esp now
+  // send data via esp now
   if (counter >= packetSize)
   {
     counter = 0;

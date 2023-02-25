@@ -6,24 +6,27 @@ const char *passwordAP = "12345678";
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
-const int packetSize = 10; // amount of sensor readings being sent within each packet
+const int packetSize = 1; // amount of sensor readings being sent within each packet
 // Must match the sender structure
 
 // initializing esp now
 typedef struct struct_message
 {
   int id;
+  boolean status;
   unsigned long long int time;
   int accelx[packetSize];
-  //int accely[packetSize];
-  //int accelz[packetSize];
-  //int gyrox[packetSize];
- // int gyroy[packetSize];
-  //int gyroz[packetSize];
+  int accely[packetSize];
+  int accelz[packetSize];
+  int gyrox[packetSize];
+  int gyroy[packetSize];
+  int gyroz[packetSize];
 } struct_message;
 
 // Create a struct_message called myData
 struct_message myData;
+
+const int devices = 6; // must add boards below and in boardsStruct
 
 // Creating upto 6 esp 32 devices
 struct_message board1;
@@ -34,7 +37,7 @@ struct_message board5;
 struct_message board6;
 
 // Create an array with all the structures
-struct_message boardsStruct[6] = {board1, board2, board3, board4, board5, board6};
+struct_message boardsStruct[devices] = {board1, board2, board3, board4, board5, board6};
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
@@ -47,20 +50,21 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
   memcpy(&myData, incomingData, sizeof(myData));
   Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
   // Update the structures with the new incoming data
-  boardsStruct[myData.id - 1].time = myData.time;
-  Serial.printf("time value: %d \n", boardsStruct[myData.id - 1].time);
-  for (int i = 0; i++; i < packetSize)
+  boardsStruct[myData.id].id = myData.id;
+  boardsStruct[myData.id].time = myData.time;
+  boardsStruct[myData.id].status = myData.status;
+
+  // updating sensor data (need for loops for cases where packetSize >1)
+  for (int i = 0; i < packetSize; i++)
   {
-    boardsStruct[myData.id - 1].accelx[i] = myData.accelx[i];
-    Serial.printf("accelx value%d: %d \n", i, boardsStruct[myData.id - 1].accelx[i]);
-   // boardsStruct[myData.id - 1].accely[i] = myData.accely[i];
-  //  boardsStruct[myData.id - 1].accelz[i] = myData.accelz[i];
-  //  boardsStruct[myData.id - 1].gyrox[i] = myData.gyrox[i];
-  //  boardsStruct[myData.id - 1].gyroy[i] = myData.gyroy[i];
-  //  boardsStruct[myData.id - 1].gyroz[i] = myData.gyroz[i];
+    boardsStruct[myData.id].accelx[i] = myData.accelx[i];
+    boardsStruct[myData.id].accely[i] = myData.accely[i];
+    boardsStruct[myData.id].accelz[i] = myData.accelz[i];
+    boardsStruct[myData.id].gyrox[i] = myData.gyrox[i];
+    boardsStruct[myData.id].gyroy[i] = myData.gyroy[i];
+    boardsStruct[myData.id].gyroz[i] = myData.gyroz[i];
   }
 
-  Serial.println();
 }
 
 void espNowSetup()
@@ -89,9 +93,10 @@ void wifiSetup()
 }
 
 // establishing functions for data transmission
-String testData1()
+String combinedSensorData()
 {
-  String test = "Hey this is test set #1";
+
+  String test = "";
   return test;
 }
 
@@ -106,17 +111,22 @@ void setup()
   // Serial port for debugging purposes
   Serial.begin(115200);
 
+  // initialize state of boards (only required to execute once)
+  for (int i = 0; i < devices; i++)
+  {
+    boardsStruct[i].status = false;
+  }
+
   wifiSetup();
   espNowSetup();
 
-  //print receiver's mac address
+  // print receiver's mac address
   Serial.println(WiFi.macAddress());
 
   // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send_P(200, "text/plain", testData1().c_str()); });
-  server.on("/test2", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send_P(200, "text/plain", testData2().c_str()); });
+  server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(200, "text/plain", combinedSensorData().c_str()); });
+
   server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request)
             { request->send(200, "text/plain", "Post route"); });
 
@@ -127,11 +137,5 @@ void setup()
 void loop()
 {
 
-  // Acess the variables for each board
-  /*int board1X = boardsStruct[0].x;
-  int board1Y = boardsStruct[0].y;
-  int board2X = boardsStruct[1].x;
-  int board2Y = boardsStruct[1].y;
-  int board3X = boardsStruct[2].x;
-  int board3Y = boardsStruct[2].y;*/
+
 }
