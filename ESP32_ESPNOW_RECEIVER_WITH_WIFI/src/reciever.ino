@@ -9,11 +9,13 @@ AsyncWebServer server(80);
 const int packetSize = 9; // amount of sensor readings being sent within each packet
 // Must match the sender structure
 
+
+
 // initializing esp now
 typedef struct struct_message
 {
   int id;
-  boolean status;
+  boolean espStatus;
   unsigned long long int time;
   int accelx[packetSize];
   int accely[packetSize];
@@ -42,6 +44,7 @@ struct_message boardsStruct[devices] = {board1, board2, board3, board4, board5, 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
+  
   char macStr[18];
   Serial.print("Packet received from: ");
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -52,7 +55,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
   // Update the structures with the new incoming data
   boardsStruct[myData.id].id = myData.id;
   boardsStruct[myData.id].time = myData.time;
-  boardsStruct[myData.id].status = myData.status;
+  boardsStruct[myData.id].espStatus = myData.espStatus;
 
   // updating sensor data (need for loops for cases where packetSize >1)
   for (int i = 0; i < packetSize; i++)
@@ -64,6 +67,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     boardsStruct[myData.id].gyroy[i] = myData.gyroy[i];
     boardsStruct[myData.id].gyroz[i] = myData.gyroz[i];
   }
+
 }
 
 void espNowSetup()
@@ -102,6 +106,7 @@ String combinedSensorData()
     // int i=1;
     String c = "{\n";
     String d = "\"id\":\"" + String(i) + "\",\n";
+    //String d2 = "\"status\":\"" + String(boardsStruct[i].espStatus) + "\",\n";
     String e = "\"time\":\"" + String(boardsStruct[i].time) + "\",\n";
     String f = "\"accelx\":[";
     String g = "\"accely\":[";
@@ -202,4 +207,8 @@ void setup()
 
 void loop()
 {
+  
+
 }
+
+
