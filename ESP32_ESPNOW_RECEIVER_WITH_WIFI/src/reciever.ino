@@ -185,7 +185,7 @@ void setup()
   // initialize state of boards (only required to execute once)
   for (int i = 0; i < devices; i++)
   {
-    boardsStruct[i].status = false;
+    boardsStruct[i].espStatus = false;
   }
 
   espNowSetup();
