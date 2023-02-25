@@ -6,7 +6,7 @@ const char *passwordAP = "12345678";
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
-const int packetSize = 1; // amount of sensor readings being sent within each packet
+const int packetSize = 5; // amount of sensor readings being sent within each packet
 // Must match the sender structure
 
 // initializing esp now
@@ -64,7 +64,6 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
     boardsStruct[myData.id].gyroy[i] = myData.gyroy[i];
     boardsStruct[myData.id].gyroz[i] = myData.gyroz[i];
   }
-
 }
 
 void espNowSetup()
@@ -96,8 +95,49 @@ void wifiSetup()
 String combinedSensorData()
 {
 
-  String test = "";
-  return test;
+  String stat;
+  for (int i = 0; i < 1; i++)
+  {
+
+    String c = "{\n";
+    //String d = "\"id\":" + boardsStruct[i].id;
+    String e = "\n\"time\":\"" + boardsStruct[i].time;
+    String f = "\"\n\"accelx\":[";
+    String g = "\"\n\"accely\":[";
+    String h = "\"\n\"accelz\":[";
+    String k = "\"\n\"gyrox\":[";
+    String l = "\"\n\"gyrox\":[";
+    String m = "\"\n\"gyrox\":[";
+
+    String totalaccelx, totalaccely, totalaccelz, totalgyrox, totalgyroy, totalgyroz;
+
+    for (int j = 0; j < packetSize; j++)
+    {
+      String accelx = "\"" + String(boardsStruct[i].accelx[j]) + "\",";
+      totalaccelx = totalaccelx + accelx;
+      String accely = "\"" + String(boardsStruct[i].accely[j]) + "\",";
+      totalaccely = totalaccely + accely;
+      String accelz = "\"" + String(boardsStruct[i].accelz[j]) + "\",";
+      totalaccelz = totalaccelz + accelz;
+      String gyrox = "\"" + String(boardsStruct[i].gyrox[j]) + "\",";
+      totalgyrox = totalgyrox + gyrox;
+      String gyroy = "\"" + String(boardsStruct[i].gyroy[j]) + "\",";
+      totalgyroy = totalgyroy + gyroy;
+      String gyroz = "\"" + String(boardsStruct[i].gyroz[j]) + "\",";
+      totalgyroz = totalgyroz + gyroz;
+      String y = "\b],\n";
+      String y2 = "\b]\n},";
+      stat = stat + c + e + f + totalaccelx + y + totalaccely + y + totalaccelz + y + totalgyrox + y + totalgyroy + y + totalgyroz + y2;
+    }
+  }
+
+  String a = "{\n";
+  String b = "\"boards\":[";
+  String z = "\b]\n}";
+
+  String combinedText = a + b + stat + z;
+
+  return combinedText;
 }
 
 String testData2()
@@ -117,18 +157,18 @@ void setup()
     boardsStruct[i].status = false;
   }
 
-  wifiSetup();
   espNowSetup();
+  wifiSetup();
 
   // print receiver's mac address
   Serial.println(WiFi.macAddress());
 
   // Route for root / web page
-  server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", combinedSensorData().c_str()); });
 
-  server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request)
-            { request->send(200, "text/plain", "Post route"); });
+  // server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request)
+  //{ request->send(200, "text/plain", "Post route"); });
 
   // Start server
   server.begin();
@@ -136,6 +176,4 @@ void setup()
 
 void loop()
 {
-
-
 }

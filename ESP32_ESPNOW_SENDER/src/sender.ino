@@ -7,7 +7,7 @@ int mcuID = 0;    //id goes from 0 to 5
 
 // initializing time
 
-const int packetSize = 1; // amount of sensor readings being sent within each packet
+const int packetSize = 5; // amount of sensor readings being sent within each packet
 // transfer rate = packetSize*10 (ms) - 100ms (current)
 // transfer rate = 1/(packetSize*10/1000) (Hz) - 10Hz (current)
 // keep in mind this still sends data equivalent to 100Hz
@@ -92,31 +92,31 @@ int accelxVal()
 }
 int accelyVal()
 {
-  int value = 121212;
+  int value = 12121;
 
   return value;
 }
 int accelzVal()
 {
-  int value = 0000000;
+  int value = 00000;
 
   return value;
 }
 int gyroxVal()
 {
-  int value = 11111111;
+  int value = 11111;
 
   return value;
 }
 int gyroyVal()
 {
-  int value = 999999999;
+  int value = 99999;
 
   return value;
 }
 int gyrozVal()
 {
-  int value = 8888888888;
+  int value = 88888;
 
   return value;
 }
