@@ -24,11 +24,23 @@ int counter = 0;   // variable to sequentially store packets as fixed packet siz
 int ledPin1 = 2;
 int ledStatus1 = false;
 
+//function to toggle LED pin 2
+void toggleLED(){
+  if(ledStatus1==true){
+    ledStatus1=false;
+  }
+  else{
+    ledStatus1=true;
+  }
+  digitalWrite(ledPin1,ledStatus1);
+}
+
+
 // Must match the sender structure
 typedef struct struct_message
 {
   int id;
-  boolean status;
+  boolean espStatus;
   unsigned long long int time;
   int accelx[packetSize];
   int accely[packetSize];
@@ -146,7 +158,7 @@ void loop()
 {
 
   // update time and status
-  myData.status=true;
+  myData.espStatus=true;
   if (counter == 0)
   {
     myData.time = 14 * 60 * 60 * 1000 + 9 * 60 * 1000 + pm;
@@ -188,12 +200,3 @@ void loop()
 }
 
 
-void toggleLED(){
-  if(ledStatus1==true){
-    ledStatus1=false;
-  }
-  else{
-    ledStatus1=true;
-  }
-  digitalWrite(ledPin1,ledStatus1);
-}
