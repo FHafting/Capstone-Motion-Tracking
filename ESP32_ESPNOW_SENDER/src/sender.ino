@@ -16,7 +16,7 @@ const int packetSize = 1; // amount of sensor readings being sent within each pa
 // defining the sample rate for every sensor reading
 unsigned long long cm = 0;
 unsigned long long pm = 0;
-int interval = 1000; // 10 ms interval for 100 hz
+int interval = 10; // 10 ms interval for 100 hz
 int counter = 0;   // variable to sequentially store packets as fixed packet sizes
 
 
