@@ -7,7 +7,7 @@ int mcuID = 1;    //id goes from 0 to 5
 
 // initializing time
 
-const int packetSize = 7; // amount of sensor readings being sent within each packet
+const int packetSize = 9; // amount of sensor readings being sent within each packet
 // transfer rate = packetSize*10 (ms) - 100ms (current)
 // transfer rate = 1/(packetSize*10/1000) (Hz) - 10Hz (current)
 // keep in mind this still sends data equivalent to 100Hz
