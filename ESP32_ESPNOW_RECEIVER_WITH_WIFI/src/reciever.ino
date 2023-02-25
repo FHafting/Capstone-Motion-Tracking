@@ -6,7 +6,7 @@ const char *passwordAP = "12345678";
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
-const int packetSize = 5; // amount of sensor readings being sent within each packet
+const int packetSize = 7; // amount of sensor readings being sent within each packet
 // Must match the sender structure
 
 // initializing esp now
@@ -94,46 +94,72 @@ void wifiSetup()
 // establishing functions for data transmission
 String combinedSensorData()
 {
+  // String combinedText = String(boardsStruct[1].id) + boardsStruct[1].accelx[1] + boardsStruct[1].accelx[0];
 
   String stat;
-  for (int i = 0; i < 1; i++)
+  for (int i = 0; i < devices; i++)
   {
-
+    // int i=1;
     String c = "{\n";
-    //String d = "\"id\":" + boardsStruct[i].id;
-    String e = "\n\"time\":\"" + boardsStruct[i].time;
-    String f = "\"\n\"accelx\":[";
-    String g = "\"\n\"accely\":[";
-    String h = "\"\n\"accelz\":[";
-    String k = "\"\n\"gyrox\":[";
-    String l = "\"\n\"gyrox\":[";
-    String m = "\"\n\"gyrox\":[";
+    String d = "\"id\":\"" + String(i) + "\",\n";
+    String e = "\"time\":\"" + String(boardsStruct[i].time) + "\",\n";
+    String f = "\"accelx\":[";
+    String g = "\"accely\":[";
+    String h = "\"accelz\":[";
+    String k = "\"gyrox\":[";
+    String l = "\"gyroy\":[";
+    String m = "\"gyroz\":[";
 
-    String totalaccelx, totalaccely, totalaccelz, totalgyrox, totalgyroy, totalgyroz;
+    String totalaccelx, totalaccely, totalaccelz, totalgyrox, totalgyroy, totalgyroz, y, y2;
 
     for (int j = 0; j < packetSize; j++)
     {
-      String accelx = "\"" + String(boardsStruct[i].accelx[j]) + "\",";
-      totalaccelx = totalaccelx + accelx;
-      String accely = "\"" + String(boardsStruct[i].accely[j]) + "\",";
-      totalaccely = totalaccely + accely;
-      String accelz = "\"" + String(boardsStruct[i].accelz[j]) + "\",";
-      totalaccelz = totalaccelz + accelz;
-      String gyrox = "\"" + String(boardsStruct[i].gyrox[j]) + "\",";
-      totalgyrox = totalgyrox + gyrox;
-      String gyroy = "\"" + String(boardsStruct[i].gyroy[j]) + "\",";
-      totalgyroy = totalgyroy + gyroy;
-      String gyroz = "\"" + String(boardsStruct[i].gyroz[j]) + "\",";
-      totalgyroz = totalgyroz + gyroz;
-      String y = "\b],\n";
-      String y2 = "\b]\n},";
-      stat = stat + c + e + f + totalaccelx + y + totalaccely + y + totalaccelz + y + totalgyrox + y + totalgyroy + y + totalgyroz + y2;
+      // int j=0;
+      String accelx = "\"" + String(boardsStruct[i].accelx[j]) + "\"";
+      String accely = "\"" + String(boardsStruct[i].accely[j]) + "\"";
+      String accelz = "\"" + String(boardsStruct[i].accelz[j]) + "\"";
+      String gyrox = "\"" + String(boardsStruct[i].gyrox[j]) + "\"";
+      String gyroy = "\"" + String(boardsStruct[i].gyroy[j]) + "\"";
+      String gyroz = "\"" + String(boardsStruct[i].gyroz[j]) + "\"";
+
+      if (j < packetSize - 1)
+      {
+        totalaccelx = totalaccelx + accelx + ",";
+        totalaccely = totalaccely + accely + ",";
+        totalaccelz = totalaccelz + accelz + ",";
+        totalgyrox = totalgyrox + gyrox + ",";
+        totalgyroy = totalgyroy + gyroy + ",";
+        totalgyroz = totalgyroz + gyroz + ",";
+      }
+      else
+      {
+        totalaccelx = totalaccelx + accelx;
+        totalaccely = totalaccely + accely;
+        totalaccelz = totalaccelz + accelz;
+        totalgyrox = totalgyrox + gyrox;
+        totalgyroy = totalgyroy + gyroy;
+        totalgyroz = totalgyroz + gyroz;
+      }
+
+      y = "],\n";
+      y2 = "]\n}";
     }
+    
+
+  if(i<devices-1){
+    stat = stat + c + d + e + f + totalaccelx + y + g + totalaccely + y + h + totalaccelz + y + k + totalgyrox + y + l + totalgyroy + y + m + totalgyroz + y2 + ",";
+  }
+  else{
+    stat = stat + c + d + e + f + totalaccelx + y + g + totalaccely + y + h + totalaccelz + y + k + totalgyrox + y + l + totalgyroy + y + m + totalgyroz + y2;
+  }
+
+
+
   }
 
   String a = "{\n";
   String b = "\"boards\":[";
-  String z = "\b]\n}";
+  String z = "]\n}";
 
   String combinedText = a + b + stat + z;
 
