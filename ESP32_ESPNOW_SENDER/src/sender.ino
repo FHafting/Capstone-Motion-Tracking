@@ -1,9 +1,5 @@
 #include "headers.h"
-// #include "functions.h"
 
-
-#include "Wire.h"
-#include "SPI.h"
 
 LSM6DS3 myIMU; //Default constructor is I2C, addr 0x6B
 
@@ -156,7 +152,7 @@ void loop()
   myData.espStatus=true;
   if (counter == 0)
   {
-    myData.time = 14 * 60 * 60 * 1000 + 9 * 60 * 1000 + pm;
+    myData.time = pm;
   }
 
   cm = millis();
