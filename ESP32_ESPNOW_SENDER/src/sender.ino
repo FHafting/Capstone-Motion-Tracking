@@ -1,7 +1,7 @@
 #include "headers.h"
 // #include "functions.h"
 
-#include "SparkFunLSM6DS3.h"
+
 #include "Wire.h"
 #include "SPI.h"
 
@@ -148,51 +148,6 @@ void setup()
   myIMU.begin();
   
 }
-
-// data functions
-// samples sensor values every 10 ms (100 hz refresh rate)
-
-//replace content of these functions with code for extracting sensor data from IMU
-// currently meant for testing
-
-int accelxVal()
-{
-  int value = 12345;
-
-  return value;
-}
-int accelyVal()
-{
-  int value = 12121;
-
-  return value;
-}
-int accelzVal()
-{
-  int value = 00000;
-
-  return value;
-}
-int gyroxVal()
-{
-  int value = 11111;
-
-  return value;
-}
-int gyroyVal()
-{
-  int value = 99999;
-
-  return value;
-}
-int gyrozVal()
-{
-  int value = 88888;
-
-  return value;
-}
-
-
 
 void loop()
 {
