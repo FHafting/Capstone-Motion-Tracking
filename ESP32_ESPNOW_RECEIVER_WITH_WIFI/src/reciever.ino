@@ -11,18 +11,18 @@ const int packetSize = 9; // amount of sensor readings being sent within each pa
 
 
 
-// initializing esp now
+// initializing message structure from ESP NOW
 typedef struct struct_message
 {
   int id;
   boolean espStatus;
   unsigned long long int time;
-  int accelx[packetSize];
-  int accely[packetSize];
-  int accelz[packetSize];
-  int gyrox[packetSize];
-  int gyroy[packetSize];
-  int gyroz[packetSize];
+  float accelx[packetSize];
+  float accely[packetSize];
+  float accelz[packetSize];
+  float gyrox[packetSize];
+  float gyroy[packetSize];
+  float gyroz[packetSize];
 } struct_message;
 
 // Create a struct_message called myData
@@ -93,12 +93,12 @@ void wifiSetup()
   // Connect to Wi-Fi
   WiFi.softAP(ssidAP, passwordAP);
   Serial.println(WiFi.softAPIP());
+   
 }
 
-// establishing functions for data transmission
+// establishing function for data transmission through wifi (JSON Code here)
 String combinedSensorData()
 {
-  // String combinedText = String(boardsStruct[1].id) + boardsStruct[1].accelx[1] + boardsStruct[1].accelx[0];
 
   String stat;
   for (int i = 0; i < devices; i++)
@@ -158,8 +158,6 @@ String combinedSensorData()
     stat = stat + c + d + e + f + totalaccelx + y + g + totalaccely + y + h + totalaccelz + y + k + totalgyrox + y + l + totalgyroy + y + m + totalgyroz + y2;
   }
 
-
-
   }
 
   String a = "{\n";
@@ -171,11 +169,6 @@ String combinedSensorData()
   return combinedText;
 }
 
-String testData2()
-{
-  String test = "{\"ESP32 ID\":1,\n\"Sensor ID\":1,\n\"Time\":\"10:0000\",\n\"Value\": 12453.6987}";
-  return test;
-}
 
 void setup()
 {
@@ -192,9 +185,11 @@ void setup()
   wifiSetup();
 
   // print receiver's mac address
+  Serial.println("\n");
   Serial.println(WiFi.macAddress());
 
   // Route for root / web page
+  //also the get method for sending the sensor data
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", combinedSensorData().c_str()); });
 
