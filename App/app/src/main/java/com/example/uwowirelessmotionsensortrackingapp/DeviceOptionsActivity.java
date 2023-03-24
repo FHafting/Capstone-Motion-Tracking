@@ -43,8 +43,9 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     String id;
     int activeDevices=0;
     int temp100;
-int temp1000;
-int temp2000;
+int flag1;
+int flag2;
+int timeDly;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,13 +126,17 @@ int temp2000;
         int [] boardStatus={0,0,0,0,0,0};
         int [] prevTime={0,0,0,0,0,0};
         int [] currentTime={0,0,0,0,0,0};
+
         // Task Scheduler using Handler and Runnable
 
                 final android.os.Handler handler = new Handler();
                 Runnable run = new Runnable(){
                     @Override
                     public void run() {
-                        temp1000 = (int) System.currentTimeMillis();
+
+                        //noting the start time of execution
+                        flag1 = (int) System.currentTimeMillis();
+
                         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
                                 url, null, new Response.Listener<JSONObject>() {
                             @Override
@@ -191,53 +196,68 @@ int temp2000;
                         });
                         requestQueue.add(jsonObjectRequest);
 
-                        //setting up status
-                        if(dataStatus==1){
-                            statusString="Connected";
-                        }else{
-                            statusString="Not Connected";
-                            timerStatus=0;
-                        }
 
+                        //noting the end time of execution
+                        flag2 = (int) System.currentTimeMillis();
+                        timeDly = 90-(flag2-flag1);
+                        Log.d("shiv2", "time delay for task 1: "+ timeDly);
 
-                        if(timerStatus==0){
-                            chronometer.stop();
-                            chronometer.setBase(SystemClock.elapsedRealtime());
-                        }
-
-                        //active devices
-                        //for(int i =0; i<currentTime.length; i++){
-                        int i=1;
-                            if(currentTime[i]-prevTime[i]!=0){
-                                temp100=currentTime[i]-prevTime[i];
-                                activeDevices++;
-                                boardStatus[i]=1;
-                            }else{
-                                boardStatus[i]=0;
-                            }
-                            prevTime[i]=currentTime[i];
-                      //  }
-
-                        //status update
-                        String temp="IP Address: " + ipAddressValue + "\n"
-                                +"Status: "+statusString+"\n"
-                                +"Active Devices: "+activeDevices+"\n"
-                                +"Session Duration:";
-                        ipAddressView.setText(temp);
-                        temp2000 = (int) System.currentTimeMillis();
-                        Log.d("shiv", "boardStatus: "+ Arrays.toString(boardStatus)+"time difference: "+temp100+"actual time: "+(temp2000-temp1000));
-                        //must occur after status update
-                        activeDevices=0;
-
-
-
-                        handler.postDelayed(this, 45);
+                        handler.postDelayed(this, timeDly);
 
                     }
                 };
                 handler.post(run);
 
 
+
+        final android.os.Handler handler2 = new Handler();
+        Runnable run2 = new Runnable(){
+            @Override
+            public void run() {
+
+                //setting up status
+                if(dataStatus==1){
+                    statusString="Connected";
+                }else{
+                    statusString="Not Connected";
+                    timerStatus=0;
+                }
+
+
+                if(timerStatus==0){
+                    chronometer.stop();
+                    chronometer.setBase(SystemClock.elapsedRealtime());
+                }
+
+                //active devices
+                for(int i =0; i<currentTime.length; i++){
+
+                if(currentTime[i]-prevTime[i]!=0){
+
+                    activeDevices++;
+                    boardStatus[i]=1;
+                }else{
+                    boardStatus[i]=0;
+                }
+                prevTime[i]=currentTime[i];
+                 }
+
+                //status update
+                String temp="IP Address: " + ipAddressValue + "\n"
+                        +"Status: "+statusString+"\n"
+                        +"Active Devices: "+activeDevices+"\n"
+                        +"Session Duration:";
+                ipAddressView.setText(temp);
+
+                Log.d("boardstatus", "boardStatus: "+ Arrays.toString(boardStatus)+dataStatus);
+                //must occur after status update
+
+
+                handler2.postDelayed(this, 300);
+                activeDevices=0;
+            }
+        };
+        handler2.post(run2);
 
 
 
