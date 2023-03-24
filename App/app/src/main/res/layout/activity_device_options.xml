@@ -10,7 +10,7 @@
     <TextView
         android:id="@+id/ip_address"
         android:layout_width="280dp"
-        android:layout_height="80dp"
+        android:layout_height="100dp"
         android:layout_marginStart="10sp"
         android:textColor="@color/black"
         android:textSize="20sp"
