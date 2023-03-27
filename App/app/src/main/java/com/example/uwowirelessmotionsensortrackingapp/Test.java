@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
 import com.example.uwowirelessmotionsensortrackingapp.params.Params;
+import com.example.uwowirelessmotionsensortrackingapp.Board;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
@@ -17,6 +18,7 @@ import com.example.uwowirelessmotionsensortrackingapp.params.Params;
 import java.util.List;
 
 public class Test extends AppCompatActivity {
+    /*
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +39,7 @@ for(int i=0;i<10;i++){
     dbBoard0.setSensor4("00");
     dbBoard0.setSensor5("00");
     dbBoard0.setSensor6("00");
-    db.addSensorData(dbBoard0, Params.BOARD_TABLE_0);
+    db.addSensorData(dbBoard0, "board_table_0");
 
     //creating list
     List<Board> allSensorData = db.getAllData(Params.BOARD_TABLE_0);
@@ -56,4 +58,6 @@ for(int i=0;i<10;i++){
     }
 }
 
-}}
+}
+*/
+}
