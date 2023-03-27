@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 String ipAddress = ipTextField.getText().toString();
-                Intent i = new Intent(getApplicationContext(), Test2.class);
+                Intent i = new Intent(getApplicationContext(), DeviceOptionsActivity.class);
                 i.putExtra("ipAddress",ipAddress);
                 startActivity(i);
             }

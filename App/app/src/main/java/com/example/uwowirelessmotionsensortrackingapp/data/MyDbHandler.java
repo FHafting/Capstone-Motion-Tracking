@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.example.uwowirelessmotionsensortrackingapp.Board;
-import com.example.uwowirelessmotionsensortrackingapp.params.Params;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,19 +15,100 @@ import java.util.List;
 
 public class MyDbHandler extends SQLiteOpenHelper {
 
+
+    public static final int DB_VERSION = 2;
+    public static final String DB_NAME = "board_data_db_2";
+
+
+    public static final String BOARD_TABLE_0 = "board_table_0";
+    public static final String BOARD_TABLE_1 = "board_table_1";
+    public static final String BOARD_TABLE_2 = "board_table_2";
+    public static final String BOARD_TABLE_3 = "board_table_3";
+    public static final String BOARD_TABLE_4 = "board_table_4";
+    public static final String BOARD_TABLE_5 = "board_table_5";
+
+
+    //Keys of our table in db
+    public static final String KEY_ID = "id";
+    public static final String KEY_TIME = "time";
+    public static final String KEY_SENSOR1 = "sensor1";
+    public static final String KEY_SENSOR2 = "sensor2";
+    public static final String KEY_SENSOR3 = "sensor3";
+    public static final String KEY_SENSOR4 = "sensor4";
+    public static final String KEY_SENSOR5 = "sensor5";
+    public static final String KEY_SENSOR6 = "sensor6";
+
+
+
+
     public MyDbHandler(Context context) {
-        super(context, Params.DB_NAME, null, Params.DB_VERSION);
+        super(context, DB_NAME, null, DB_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String create = "CREATE TABLE " + Params.BOARD_TABLE_0 + "("
-                + Params.KEY_ID + " INTEGER PRIMARY KEY," + Params.KEY_TIME
-                + " TEXT," + Params.KEY_SENSOR1 + " TEXT"+ ")";
+        String create0 = "CREATE TABLE " + BOARD_TABLE_0 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+               KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+               KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create1 = "CREATE TABLE " + BOARD_TABLE_1 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create2 = "CREATE TABLE " + BOARD_TABLE_2 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create3 = "CREATE TABLE " + BOARD_TABLE_3 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create4 = "CREATE TABLE " + BOARD_TABLE_4 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create5 = "CREATE TABLE " + BOARD_TABLE_5 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
 
-        Log.d("finn", "Query being run is : "+ create);
-        db.execSQL(create);
-
+        db.execSQL(create0);
+        db.execSQL(create1);
+        db.execSQL(create2);
+        db.execSQL(create3);
+        db.execSQL(create4);
+        db.execSQL(create5);
+        Log.d("shiv", "Successfully created database");
     }
 
 
@@ -37,28 +117,32 @@ public class MyDbHandler extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
     }
-    public void addSensorData(Board board){
+    public void addSensorData(Board board, String table){
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(Params.KEY_TIME, board.getTime());
-        values.put(Params.KEY_SENSOR1, board.getSensor1());
+        values.put(KEY_TIME, board.getTime());
+        values.put(KEY_SENSOR1, board.getSensor1());
+        values.put(KEY_SENSOR2, board.getSensor2());
+        values.put(KEY_SENSOR3, board.getSensor3());
+        values.put(KEY_SENSOR4, board.getSensor3());
+        values.put(KEY_SENSOR5, board.getSensor3());
+        values.put(KEY_SENSOR6, board.getSensor3());
 
 
-
-        db.insert(Params.BOARD_TABLE_0, null, values);
-        Log.d("dbharry", "Successfully inserted");
+        db.insert(table, null, values);
+        Log.d("shiv", "Successfully inserted");
         db.close();
 
 
     }
 
-    public List<Board> getAllData(){
+    public List<Board> getAllData(String table){
         List<Board> sensorDataList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
         // Generate the query to read from the database
-        String select = "SELECT * FROM " + Params.BOARD_TABLE_0;
+        String select = "SELECT * FROM " + table;
         Cursor cursor = db.rawQuery(select, null);
 
         //Loop through now
@@ -68,6 +152,11 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 board.setId(Integer.parseInt(cursor.getString(0)));
                 board.setTime(cursor.getString(1));
                 board.setSensor1(cursor.getString(2));
+                board.setSensor2(cursor.getString(3));
+                board.setSensor3(cursor.getString(4));
+                board.setSensor4(cursor.getString(5));
+                board.setSensor5(cursor.getString(6));
+                board.setSensor6(cursor.getString(7));
 
                 sensorDataList.add(board);
             }while(cursor.moveToNext());
@@ -75,4 +164,16 @@ public class MyDbHandler extends SQLiteOpenHelper {
         return sensorDataList;
     }
 
+
+    public void deleteDb(Context context){
+        context.deleteDatabase(DB_NAME);
+    }
+
+    public int getCount(String table){
+        String query = "SELECT  * FROM " + table;
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        return cursor.getCount();
+
+    }
 }

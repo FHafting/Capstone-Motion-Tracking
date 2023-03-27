@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.util.TimingLogger;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Chronometer;
@@ -19,12 +18,10 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
 import com.example.uwowirelessmotionsensortrackingapp.params.FixedParameters;
-import com.example.uwowirelessmotionsensortrackingapp.params.Params;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,7 +33,7 @@ import java.util.List;
 
 
 public class DeviceOptionsActivity extends AppCompatActivity {
-/*
+
     //declarations
     TextView ipAddressView, test1view;
     Button start,reset,download,history;
@@ -89,13 +86,38 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         chronometer.setBase(SystemClock.elapsedRealtime());
 
         //creating database
-        MyDbHandler db = new MyDbHandler(DeviceOptionsActivity.this);
+        MyDbHandler db = new MyDbHandler(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
 
         //creating board object now
         Board dbBoard0 = new Board();
 
+
+            //adding time and sensor data to database - not adding id here because id in database means unique identifier for every sensor entry whereas
+            //in this activity, id is referring to which board it is talking about
+
+                // Get all sensor data
+                dbBoard0.setTime("00");
+                dbBoard0.setSensor1("00");
+                dbBoard0.setSensor2("00");
+                dbBoard0.setSensor3("00");
+                dbBoard0.setSensor4("00");
+                dbBoard0.setSensor5("00");
+                dbBoard0.setSensor6("00");
+                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_0);
+
+
         //creating list
-        List<Board> allSensorData = db.getAllData(Params.BOARD_TABLE_0);
+        List<Board> allSensorData = db.getAllData(MyDbHandler.BOARD_TABLE_0);
+            for(Board tempBoard: allSensorData){
+                Log.d("finn", "\nId: " + tempBoard.getId() + "\n" +
+                        "Time: " + tempBoard.getTime() + "\n"
+                        + "Sensor 1 Data: " + tempBoard.getSensor1() + "\n"
+                        + "Sensor 2 Data: " + tempBoard.getSensor2() + "\n"
+                        + "Sensor 3 Data: " + tempBoard.getSensor3() + "\n"
+                        + "Sensor 4 Data: " + tempBoard.getSensor4() + "\n"
+                        + "Sensor 5 Data: " + tempBoard.getSensor5() + "\n"
+                        + "Sensor 6 Data: " + tempBoard.getSensor6() + "\n");
+            }
 
 
 
@@ -129,8 +151,16 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         });
 
 
+        download.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+
 
         String url="http://"+ipAddressValue+"/";
+        //String url = "https://run.mocky.io/v3/3276125e-d145-48b4-9dd0-42d232382435";
         ArrayList<String> accelxData = new ArrayList<>();
         ArrayList<String> accelyData = new ArrayList<>();
         ArrayList<String> accelzData = new ArrayList<>();
@@ -188,39 +218,6 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                     gyroxData.add(String.valueOf(gyrox.get(j)));
                                     gyroyData.add(String.valueOf(gyroy.get(j)));
                                     gyrozData.add(String.valueOf(gyroz.get(j)));
-
-                                }
-
-                                //adding time and sensor data to database - not adding id here because id in database means unique identifier for every sensor entry whereas
-                                //in this activity, id is referring to which board it is talking about
-
-                                if(i==0){       //board0 data only
-                                    for (int j=0; j<accelx.length();j++)        //looping through 9 sensor data values for each sensor
-                                    {
-                                        // Get all sensor data
-                                        dbBoard0.setTime("00");
-                                        dbBoard0.setSensor1("00");
-                                        dbBoard0.setSensor2("00");
-                                        dbBoard0.setSensor3("00");
-                                        dbBoard0.setSensor4("00");
-                                        dbBoard0.setSensor5("00");
-                                        dbBoard0.setSensor6("00");
-                                        db.addSensorData(dbBoard0, Params.BOARD_TABLE_0);
-
-                                }}
-
-
-
-                                for(Board tempBoard: allSensorData){
-                                    Log.d("finn", "\nId: " + tempBoard.getId() + "\n" +
-                                            "Time: " + tempBoard.getTime() + "\n"
-                                            + "Sensor 1 Data: " + tempBoard.getSensor1() + "\n"
-                                            + "Sensor 2 Data: " + tempBoard.getSensor2() + "\n"
-                                            + "Sensor 3 Data: " + tempBoard.getSensor3() + "\n"
-                                            + "Sensor 4 Data: " + tempBoard.getSensor4() + "\n"
-                                            + "Sensor 5 Data: " + tempBoard.getSensor5() + "\n"
-                                            + "Sensor 6 Data: " + tempBoard.getSensor6() + "\n");
-
 
                                 }
 
@@ -323,6 +320,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 //must occur after status update
 
 
+
                 handler2.postDelayed(this, timeDly+1000);
                 activeDevices=0;
             }
@@ -334,5 +332,5 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
     }
 
-*/
+
 }
