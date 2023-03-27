@@ -22,6 +22,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
+import com.example.uwowirelessmotionsensortrackingapp.params.FixedParameters;
+import com.example.uwowirelessmotionsensortrackingapp.params.Params;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,10 +32,11 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 public class DeviceOptionsActivity extends AppCompatActivity {
-
+/*
     //declarations
     TextView ipAddressView, test1view;
     Button start,reset,download,history;
@@ -43,9 +47,10 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     String id;
     int activeDevices=0;
     int temp100;
-int flag1;
-int flag2;
-int timeDly;
+    int flag1;
+    int flag2;
+    int timeDly;
+    int numBoards = FixedParameters.numBoards;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +87,17 @@ int timeDly;
         Chronometer chronometer = findViewById(R.id.chronometer);
         chronometer.setFormat("%s");
         chronometer.setBase(SystemClock.elapsedRealtime());
+
+        //creating database
+        MyDbHandler db = new MyDbHandler(DeviceOptionsActivity.this);
+
+        //creating board object now
+        Board dbBoard0 = new Board();
+
+        //creating list
+        List<Board> allSensorData = db.getAllData(Params.BOARD_TABLE_0);
+
+
 
 
         //adding timer functionality
@@ -123,90 +139,130 @@ int timeDly;
         ArrayList<String> gyrozData = new ArrayList<>();
 
 
-        int [] boardStatus={0,0,0,0,0,0};
-        int [] prevTime={0,0,0,0,0,0};
-        int [] currentTime={0,0,0,0,0,0};
+        int [] boardStatus=new int[numBoards];
+        int [] statusCounter=new int[numBoards];
+        int [] prevTime=new int[numBoards];
+        int [] currentTime=new int[numBoards];
 
         // Task Scheduler using Handler and Runnable
 
-                final android.os.Handler handler = new Handler();
-                Runnable run = new Runnable(){
+        final android.os.Handler handler = new Handler();
+        Runnable run = new Runnable(){
+            @Override
+            public void run() {
+
+                //noting the start time of execution
+                flag1 = (int) System.currentTimeMillis();
+
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
+                        url, null, new Response.Listener<JSONObject>() {
                     @Override
-                    public void run() {
+                    public void onResponse(JSONObject response) {
+                        try {
+                            dataStatus=1;
+                            JSONArray boards = response.getJSONArray("boards");
 
-                        //noting the start time of execution
-                        flag1 = (int) System.currentTimeMillis();
+                            for (int i=0; i<boards.length();i++){
+                                JSONObject board = boards.getJSONObject(i);
+                                //time and id
+                                time=board.getString("time");
+                                id=board.getString("id");
 
-                        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
-                                url, null, new Response.Listener<JSONObject>() {
-                            @Override
-                            public void onResponse(JSONObject response) {
-                                try {
-                                    dataStatus=1;
-                                    JSONArray boards = response.getJSONArray("boards");
 
-                                    for (int i=0; i<boards.length();i++){
-                                        JSONObject board = boards.getJSONObject(i);
-                                        time=board.getString("time");
-                                        id=board.getString("id");
+                                //adding time in current time array for device status
+                                currentTime[i] = Integer.valueOf(time);
 
-                                        currentTime[i] = Integer.valueOf(time);
+                                //JSON arrays for sensor data
+                                JSONArray accelx = board.getJSONArray("accelx");
+                                JSONArray accely = board.getJSONArray("accely");
+                                JSONArray accelz = board.getJSONArray("accelz");
+                                JSONArray gyrox = board.getJSONArray("gyrox");
+                                JSONArray gyroy = board.getJSONArray("gyroy");
+                                JSONArray gyroz = board.getJSONArray("gyroz");
 
-                                        JSONArray accelx = board.getJSONArray("accelx");
-                                        JSONArray accely = board.getJSONArray("accely");
-                                        JSONArray accelz = board.getJSONArray("accelz");
-                                        JSONArray gyrox = board.getJSONArray("gyrox");
-                                        JSONArray gyroy = board.getJSONArray("gyroy");
-                                        JSONArray gyroz = board.getJSONArray("gyroz");
+                                for (int j=0; j<accelx.length();j++) {
 
-                                        for (int j=0; j<accelx.length();j++) {
-
-                                            accelxData.add(String.valueOf(accelx.get(j)));
-                                            accelyData.add(String.valueOf(accely.get(j)));
-                                            accelzData.add(String.valueOf(accelz.get(j)));
-                                            gyroxData.add(String.valueOf(gyrox.get(j)));
-                                            gyroyData.add(String.valueOf(gyroy.get(j)));
-                                            gyrozData.add(String.valueOf(gyroz.get(j)));
-
-                                        }
-
-                                        Log.d("Shubham", "onResponse: ID is " +
-                                               id + " and time is " + time+accelxData+accelyData+accelzData+gyroxData+gyroyData+gyrozData);
-
-                                        //clear data
-                                        accelxData.clear();
-                                        accelyData.clear();
-                                        accelzData.clear();
-                                        gyroxData.clear();
-                                        gyroyData.clear();
-                                        gyrozData.clear();
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                                    accelxData.add(String.valueOf(accelx.get(j)));
+                                    accelyData.add(String.valueOf(accely.get(j)));
+                                    accelzData.add(String.valueOf(accelz.get(j)));
+                                    gyroxData.add(String.valueOf(gyrox.get(j)));
+                                    gyroyData.add(String.valueOf(gyroy.get(j)));
+                                    gyrozData.add(String.valueOf(gyroz.get(j)));
 
                                 }
+
+                                //adding time and sensor data to database - not adding id here because id in database means unique identifier for every sensor entry whereas
+                                //in this activity, id is referring to which board it is talking about
+
+                                if(i==0){       //board0 data only
+                                    for (int j=0; j<accelx.length();j++)        //looping through 9 sensor data values for each sensor
+                                    {
+                                        // Get all sensor data
+                                        dbBoard0.setTime("00");
+                                        dbBoard0.setSensor1("00");
+                                        dbBoard0.setSensor2("00");
+                                        dbBoard0.setSensor3("00");
+                                        dbBoard0.setSensor4("00");
+                                        dbBoard0.setSensor5("00");
+                                        dbBoard0.setSensor6("00");
+                                        db.addSensorData(dbBoard0, Params.BOARD_TABLE_0);
+
+                                }}
+
+
+
+                                for(Board tempBoard: allSensorData){
+                                    Log.d("finn", "\nId: " + tempBoard.getId() + "\n" +
+                                            "Time: " + tempBoard.getTime() + "\n"
+                                            + "Sensor 1 Data: " + tempBoard.getSensor1() + "\n"
+                                            + "Sensor 2 Data: " + tempBoard.getSensor2() + "\n"
+                                            + "Sensor 3 Data: " + tempBoard.getSensor3() + "\n"
+                                            + "Sensor 4 Data: " + tempBoard.getSensor4() + "\n"
+                                            + "Sensor 5 Data: " + tempBoard.getSensor5() + "\n"
+                                            + "Sensor 6 Data: " + tempBoard.getSensor6() + "\n");
+
+
+                                }
+
+
+
+                                Log.d("Shubham", "onResponse: ID is " +
+                                        id + " and time is " + time+accelxData+accelyData+accelzData+gyroxData+gyroyData+gyrozData);
+
+                                //clear data
+                                accelxData.clear();
+                                accelyData.clear();
+                                accelzData.clear();
+                                gyroxData.clear();
+                                gyroyData.clear();
+                                gyrozData.clear();
                             }
-                        }, new Response.ErrorListener() {
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                Log.d("Shubham", "Something went wrong");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
 
-                                dataStatus=0;
-                            }
-                        });
-                        requestQueue.add(jsonObjectRequest);
-
-
-                        //noting the end time of execution
-                        flag2 = (int) System.currentTimeMillis();
-                        timeDly = 90-(flag2-flag1);
-                        Log.d("shiv2", "time delay for task 1: "+ timeDly);
-
-                        handler.postDelayed(this, timeDly);
-
+                        }
                     }
-                };
-                handler.post(run);
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("Shubham", "Something went wrong");
+
+                        dataStatus=0;
+                    }
+                });
+                requestQueue.add(jsonObjectRequest);
+
+
+                //noting the end time of execution
+                flag2 = (int) System.currentTimeMillis();
+                timeDly = 90-(flag2-flag1);
+                Log.d("shiv2", "time delay for task 1: "+ timeDly);
+
+                handler.postDelayed(this, timeDly+1000);
+
+            }
+        };
+        handler.post(run);
 
 
 
@@ -232,28 +288,42 @@ int timeDly;
                 //active devices
                 for(int i =0; i<currentTime.length; i++){
 
-                if(currentTime[i]-prevTime[i]!=0){
+                    if(currentTime[i]-prevTime[i]!=0){
+                        statusCounter[i] ++;
 
-                    activeDevices++;
-                    boardStatus[i]=1;
-                }else{
-                    boardStatus[i]=0;
+                    }else{
+                        statusCounter[i] --;
+
+                    }
+
+                    if(statusCounter[i]>10){
+                        boardStatus[i]=1;
+                        statusCounter[i]=0;
+                    }
+                    if(statusCounter[i]<-10){
+                        boardStatus[i]=0;
+                        statusCounter[i]=0;
+                    }
+
+                    activeDevices=activeDevices+boardStatus[i];
+
+                    prevTime[i]=currentTime[i];
                 }
-                prevTime[i]=currentTime[i];
-                 }
+
+
 
                 //status update
                 String temp="IP Address: " + ipAddressValue + "\n"
                         +"Status: "+statusString+"\n"
-                        +"Active Devices: "+activeDevices+"\n"
+                        +"Active Devices: "+activeDevices+ "\n"
                         +"Session Duration:";
                 ipAddressView.setText(temp);
 
-                Log.d("boardstatus", "boardStatus: "+ Arrays.toString(boardStatus)+dataStatus);
+                Log.d("boardstatus", "boardStatus: "+ Arrays.toString(statusCounter)+activeDevices);
                 //must occur after status update
 
 
-                handler2.postDelayed(this, 300);
+                handler2.postDelayed(this, timeDly+1000);
                 activeDevices=0;
             }
         };
@@ -263,4 +333,6 @@ int timeDly;
 
 
     }
+
+*/
 }

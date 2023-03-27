@@ -19,11 +19,12 @@ public class MainActivity extends AppCompatActivity {
         ipTextField=findViewById(R.id.ipTextField);
         beginBtn=findViewById(R.id.beginBtn);
 
+
         beginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String ipAddress = ipTextField.getText().toString();
-                Intent i = new Intent(getApplicationContext(), DeviceOptionsActivity.class);
+                Intent i = new Intent(getApplicationContext(), Test.class);
                 i.putExtra("ipAddress",ipAddress);
                 startActivity(i);
             }
