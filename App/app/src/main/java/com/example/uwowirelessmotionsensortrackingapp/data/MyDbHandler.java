@@ -48,7 +48,7 @@ public class MyDbHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String create0 = "CREATE TABLE " + BOARD_TABLE_0 + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
                 + " TEXT," + KEY_SENSOR1 + " TEXT,"+
                KEY_SENSOR2 + " TEXT,"+
                 KEY_SENSOR3 + " TEXT,"+
@@ -57,7 +57,7 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 KEY_SENSOR6 + " TEXT"+
                 ")";
         String create1 = "CREATE TABLE " + BOARD_TABLE_1 + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
                 + " TEXT," + KEY_SENSOR1 + " TEXT,"+
                 KEY_SENSOR2 + " TEXT,"+
                 KEY_SENSOR3 + " TEXT,"+
@@ -66,7 +66,7 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 KEY_SENSOR6 + " TEXT"+
                 ")";
         String create2 = "CREATE TABLE " + BOARD_TABLE_2 + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
                 + " TEXT," + KEY_SENSOR1 + " TEXT,"+
                 KEY_SENSOR2 + " TEXT,"+
                 KEY_SENSOR3 + " TEXT,"+
@@ -75,7 +75,7 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 KEY_SENSOR6 + " TEXT"+
                 ")";
         String create3 = "CREATE TABLE " + BOARD_TABLE_3 + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
                 + " TEXT," + KEY_SENSOR1 + " TEXT,"+
                 KEY_SENSOR2 + " TEXT,"+
                 KEY_SENSOR3 + " TEXT,"+
@@ -84,7 +84,7 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 KEY_SENSOR6 + " TEXT"+
                 ")";
         String create4 = "CREATE TABLE " + BOARD_TABLE_4 + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
                 + " TEXT," + KEY_SENSOR1 + " TEXT,"+
                 KEY_SENSOR2 + " TEXT,"+
                 KEY_SENSOR3 + " TEXT,"+
@@ -93,7 +93,7 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 KEY_SENSOR6 + " TEXT"+
                 ")";
         String create5 = "CREATE TABLE " + BOARD_TABLE_5 + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_TIME
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
                 + " TEXT," + KEY_SENSOR1 + " TEXT,"+
                 KEY_SENSOR2 + " TEXT,"+
                 KEY_SENSOR3 + " TEXT,"+

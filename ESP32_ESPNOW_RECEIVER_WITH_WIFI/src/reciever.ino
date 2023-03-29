@@ -6,7 +6,7 @@ const char *passwordAP = "12345678";
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
-const int packetSize = 9; // amount of sensor readings being sent within each packet
+const int packetSize = 10; // amount of sensor readings being sent within each packet
 // Must match the sender structure
 
 
@@ -15,8 +15,7 @@ const int packetSize = 9; // amount of sensor readings being sent within each pa
 typedef struct struct_message
 {
   int id;
-  boolean espStatus;
-  unsigned long long int time;
+  unsigned long int time;
   float accelx[packetSize];
   float accely[packetSize];
   float accelz[packetSize];
@@ -28,7 +27,7 @@ typedef struct struct_message
 // Create a struct_message called myData
 struct_message myData;
 
-const int devices = 6; // must add boards below and in boardsStruct
+const int devices = 10; // must add boards below and in boardsStruct
 
 // Creating upto 6 esp 32 devices
 struct_message board1;
@@ -37,9 +36,13 @@ struct_message board3;
 struct_message board4;
 struct_message board5;
 struct_message board6;
+struct_message board7;
+struct_message board8;
+struct_message board9;
+struct_message board10;
 
 // Create an array with all the structures
-struct_message boardsStruct[devices] = {board1, board2, board3, board4, board5, board6};
+struct_message boardsStruct[devices] = {board1, board2, board3, board4, board5, board6, board7, board8, board9, board10};
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
@@ -55,7 +58,7 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
   // Update the structures with the new incoming data
   boardsStruct[myData.id].id = myData.id;
   boardsStruct[myData.id].time = myData.time;
-  boardsStruct[myData.id].espStatus = myData.espStatus;
+  
 
   // updating sensor data (need for loops for cases where packetSize >1)
   for (int i = 0; i < packetSize; i++)
@@ -106,7 +109,6 @@ String combinedSensorData()
     // int i=1;
     String c = "{\n";
     String d = "\"id\":\"" + String(i) + "\",\n";
-    //String d2 = "\"status\":\"" + String(boardsStruct[i].espStatus) + "\",\n";
     String e = "\"time\":\"" + String(boardsStruct[i].time) + "\",\n";
     String f = "\"accelx\":[";
     String g = "\"accely\":[";
@@ -175,11 +177,6 @@ void setup()
   // Serial port for debugging purposes
   Serial.begin(115200);
 
-  // initialize state of boards (only required to execute once)
-  for (int i = 0; i < devices; i++)
-  {
-    boardsStruct[i].espStatus = false;
-  }
 
   espNowSetup();
   wifiSetup();

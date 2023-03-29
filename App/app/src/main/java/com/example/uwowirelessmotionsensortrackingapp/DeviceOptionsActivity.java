@@ -91,34 +91,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         //creating board object now
         Board dbBoard0 = new Board();
 
-
-            //adding time and sensor data to database - not adding id here because id in database means unique identifier for every sensor entry whereas
-            //in this activity, id is referring to which board it is talking about
-
-                // Get all sensor data
-                dbBoard0.setTime("00");
-                dbBoard0.setSensor1("00");
-                dbBoard0.setSensor2("00");
-                dbBoard0.setSensor3("00");
-                dbBoard0.setSensor4("00");
-                dbBoard0.setSensor5("00");
-                dbBoard0.setSensor6("00");
-                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_0);
-
-
-        //creating list
-        List<Board> allSensorData = db.getAllData(MyDbHandler.BOARD_TABLE_0);
-            for(Board tempBoard: allSensorData){
-                Log.d("finn", "\nId: " + tempBoard.getId() + "\n" +
-                        "Time: " + tempBoard.getTime() + "\n"
-                        + "Sensor 1 Data: " + tempBoard.getSensor1() + "\n"
-                        + "Sensor 2 Data: " + tempBoard.getSensor2() + "\n"
-                        + "Sensor 3 Data: " + tempBoard.getSensor3() + "\n"
-                        + "Sensor 4 Data: " + tempBoard.getSensor4() + "\n"
-                        + "Sensor 5 Data: " + tempBoard.getSensor5() + "\n"
-                        + "Sensor 6 Data: " + tempBoard.getSensor6() + "\n");
-            }
-
+        db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
 
 
 
@@ -147,6 +120,8 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 chronometer.stop();
                 chronometer.setBase(SystemClock.elapsedRealtime());
                 timerStatus=0;
+
+               // db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
             }
         });
 
@@ -219,7 +194,64 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                     gyroyData.add(String.valueOf(gyroy.get(j)));
                                     gyrozData.add(String.valueOf(gyroz.get(j)));
 
+                                    dbBoard0.setTime(time+j*10);
+                                    dbBoard0.setSensor1(accelxData.get(j));
+                                    dbBoard0.setSensor2(accelyData.get(j));
+                                    dbBoard0.setSensor3(accelzData.get(j));
+                                    dbBoard0.setSensor4(gyroxData.get(j));
+                                    dbBoard0.setSensor5(gyroyData.get(j));
+                                    dbBoard0.setSensor6(gyrozData.get(j));
+
+                                  /*  if(timerStatus==1){
+                                        switch(i){
+                                            case 0:
+                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_0);
+                                                break;
+                                            case 1:
+                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_1);
+                                                break;
+                                            case 2:
+                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_2);
+                                                break;
+                                            case 3:
+                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_3);
+                                                break;
+                                            case 4:
+                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_4);
+                                                break;
+                                            case 5:
+                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_5);
+                                                break;
+
+                                        }
+                                    }*/
                                 }
+
+
+
+
+
+
+
+
+
+                                //creating list
+
+                                 /*   String [] dbBoards = {MyDbHandler.BOARD_TABLE_0,MyDbHandler.BOARD_TABLE_1,MyDbHandler.BOARD_TABLE_2,MyDbHandler.BOARD_TABLE_3,MyDbHandler.BOARD_TABLE_4,MyDbHandler.BOARD_TABLE_5};
+                                    List<Board> allSensorData = db.getAllData(dbBoards[i]);
+                                    for(Board tempBoard: allSensorData){
+                                        Log.d("finn", "\nId: " + tempBoard.getId() + "\n"
+                                                +dbBoards[i] + "\n"
+                                                +"Time: " + tempBoard.getTime() + "\n"
+                                                + "Sensor 1 Data: " + tempBoard.getSensor1() + "\n"
+                                                + "Sensor 2 Data: " + tempBoard.getSensor2() + "\n"
+                                                + "Sensor 3 Data: " + tempBoard.getSensor3() + "\n"
+                                                + "Sensor 4 Data: " + tempBoard.getSensor4() + "\n"
+                                                + "Sensor 5 Data: " + tempBoard.getSensor5() + "\n"
+                                                + "Sensor 6 Data: " + tempBoard.getSensor6() + "\n");
+                                    }*/
+
+
 
 
 
@@ -255,7 +287,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 timeDly = 90-(flag2-flag1);
                 Log.d("shiv2", "time delay for task 1: "+ timeDly);
 
-                handler.postDelayed(this, timeDly+1000);
+                handler.postDelayed(this, timeDly);
 
             }
         };
@@ -321,7 +353,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
 
 
-                handler2.postDelayed(this, timeDly+1000);
+                handler2.postDelayed(this, timeDly);
                 activeDevices=0;
             }
         };
