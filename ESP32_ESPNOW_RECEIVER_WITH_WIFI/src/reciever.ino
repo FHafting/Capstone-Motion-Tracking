@@ -9,8 +9,12 @@ AsyncWebServer server(80);
 const int packetSize = 10; // amount of sensor readings being sent within each packet
 // Must match the sender structure
 
-
-
+//variables to calculate datarate
+float packetCount = 0;
+float cm = 0;
+float pm = 0;
+float interval =1000; //one second interval 
+float dataRate =0;
 // initializing message structure from ESP NOW
 typedef struct struct_message
 {
@@ -49,12 +53,14 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 {
   
   char macStr[18];
-  Serial.print("Packet received from: ");
-  snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-           mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.println(macStr);
+ // Serial.print("Packet received from: ");
+ // snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+ // Serial.println(macStr);
   memcpy(&myData, incomingData, sizeof(myData));
-  Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
+ // Serial.printf("Board ID %u: %u bytes\n", myData.id, len);
+
+  //incrementing packet count
+  packetCount++;
   // Update the structures with the new incoming data
   boardsStruct[myData.id].id = myData.id;
   boardsStruct[myData.id].time = myData.time;
@@ -172,6 +178,11 @@ String combinedSensorData()
 }
 
 
+String dataFun(){
+  String data = String(dataRate);
+  return data;
+}
+
 void setup()
 {
   // Serial port for debugging purposes
@@ -189,7 +200,8 @@ void setup()
   //also the get method for sending the sensor data
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", combinedSensorData().c_str()); });
-
+ server.on("/datarate", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(200, "text/plain", dataFun().c_str()); });
   // server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request)
   //{ request->send(200, "text/plain", "Post route"); });
 
@@ -197,9 +209,18 @@ void setup()
   server.begin();
 }
 
+
+
 void loop()
 {
-  
+  cm=millis();
+  if ((cm - pm) >= interval)
+  {
+dataRate = (packetCount/(interval/1000));
+    Serial.println(dataRate);
+    pm=cm;
+    packetCount=0;
+  }
 
 }
 
