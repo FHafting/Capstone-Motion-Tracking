@@ -48,7 +48,8 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     int flag2;
     int timeDly;
     int numBoards = FixedParameters.numBoards;
-
+    int numPackets = FixedParameters.packetSize;
+    String dataRate;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,8 +121,9 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 chronometer.stop();
                 chronometer.setBase(SystemClock.elapsedRealtime());
                 timerStatus=0;
-
+                //**************************************************************************************************************************
                // db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
+                //**************************************************************************************************************************
             }
         });
 
@@ -150,7 +152,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         int [] currentTime=new int[numBoards];
 
         // Task Scheduler using Handler and Runnable
-
+//*******************************************************************************************************************
         final android.os.Handler handler = new Handler();
         Runnable run = new Runnable(){
             @Override
@@ -202,6 +204,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                     dbBoard0.setSensor5(gyroyData.get(j));
                                     dbBoard0.setSensor6(gyrozData.get(j));
 
+                                    //**************************************************************************************************************************
                                   /*  if(timerStatus==1){
                                         switch(i){
                                             case 0:
@@ -225,6 +228,8 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
                                         }
                                     }*/
+
+                                    //**************************************************************************************************************************
                                 }
 
 
@@ -235,6 +240,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
 
 
+                                //**************************************************************************************************************************
                                 //creating list
 
                                  /*   String [] dbBoards = {MyDbHandler.BOARD_TABLE_0,MyDbHandler.BOARD_TABLE_1,MyDbHandler.BOARD_TABLE_2,MyDbHandler.BOARD_TABLE_3,MyDbHandler.BOARD_TABLE_4,MyDbHandler.BOARD_TABLE_5};
@@ -251,6 +257,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                                 + "Sensor 6 Data: " + tempBoard.getSensor6() + "\n");
                                     }*/
 
+                                //**************************************************************************************************************************
 
 
 
@@ -293,7 +300,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         };
         handler.post(run);
 
-
+//*******************************************************************************************************************
 
         final android.os.Handler handler2 = new Handler();
         Runnable run2 = new Runnable(){
@@ -325,11 +332,11 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
                     }
 
-                    if(statusCounter[i]>10){
+                    if(statusCounter[i]>5){
                         boardStatus[i]=1;
                         statusCounter[i]=0;
                     }
-                    if(statusCounter[i]<-10){
+                    if(statusCounter[i]<-5){
                         boardStatus[i]=0;
                         statusCounter[i]=0;
                     }
@@ -345,6 +352,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 String temp="IP Address: " + ipAddressValue + "\n"
                         +"Status: "+statusString+"\n"
                         +"Active Devices: "+activeDevices+ "\n"
+                        +"DataRate (Packets/s): "+dataRate+ "\n"
                         +"Session Duration:";
                 ipAddressView.setText(temp);
 
@@ -360,7 +368,42 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         handler2.post(run2);
 
 
+//*******************************************************************************************************************
+        String url2="http://"+ipAddressValue+"/datarate";
 
+        final android.os.Handler handler3 = new Handler();
+        Runnable run3 = new Runnable(){
+            @Override
+            public void run() {
+
+                JsonObjectRequest jsonObjectRequest2 = new JsonObjectRequest(Request.Method.GET,
+                        url2, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response2) {
+                        try {
+                            dataRate = response2.getString("dataRate");
+                            Log.d("jenn",dataRate);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d("jenn", "Something went wrong");
+
+
+                    }
+                });
+                requestQueue.add(jsonObjectRequest2);
+
+                handler3.postDelayed(this, 1000);
+
+            }
+        };
+        handler3.post(run3);
+//*******************************************************************************************************************
 
     }
 

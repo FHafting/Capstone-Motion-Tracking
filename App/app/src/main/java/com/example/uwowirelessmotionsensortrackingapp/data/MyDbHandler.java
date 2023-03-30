@@ -26,6 +26,11 @@ public class MyDbHandler extends SQLiteOpenHelper {
     public static final String BOARD_TABLE_3 = "board_table_3";
     public static final String BOARD_TABLE_4 = "board_table_4";
     public static final String BOARD_TABLE_5 = "board_table_5";
+    public static final String BOARD_TABLE_6 = "board_table_5";
+    public static final String BOARD_TABLE_7 = "board_table_5";
+    public static final String BOARD_TABLE_8 = "board_table_5";
+    public static final String BOARD_TABLE_9 = "board_table_5";
+
 
 
     //Keys of our table in db
@@ -101,6 +106,42 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 KEY_SENSOR5 + " TEXT,"+
                 KEY_SENSOR6 + " TEXT"+
                 ")";
+        String create6 = "CREATE TABLE " + BOARD_TABLE_5 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create7 = "CREATE TABLE " + BOARD_TABLE_5 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create8 = "CREATE TABLE " + BOARD_TABLE_5 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
+        String create9 = "CREATE TABLE " + BOARD_TABLE_5 + "("
+                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," + KEY_TIME
+                + " TEXT," + KEY_SENSOR1 + " TEXT,"+
+                KEY_SENSOR2 + " TEXT,"+
+                KEY_SENSOR3 + " TEXT,"+
+                KEY_SENSOR4 + " TEXT,"+
+                KEY_SENSOR5 + " TEXT,"+
+                KEY_SENSOR6 + " TEXT"+
+                ")";
 
         db.execSQL(create0);
         db.execSQL(create1);
@@ -108,6 +149,10 @@ public class MyDbHandler extends SQLiteOpenHelper {
         db.execSQL(create3);
         db.execSQL(create4);
         db.execSQL(create5);
+        db.execSQL(create6);
+        db.execSQL(create7);
+        db.execSQL(create8);
+        db.execSQL(create9);
         Log.d("shiv", "Successfully created database");
     }
 
@@ -161,6 +206,7 @@ public class MyDbHandler extends SQLiteOpenHelper {
                 sensorDataList.add(board);
             }while(cursor.moveToNext());
         }
+        cursor.close();
         return sensorDataList;
     }
 
@@ -173,7 +219,9 @@ public class MyDbHandler extends SQLiteOpenHelper {
         String query = "SELECT  * FROM " + table;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(query, null);
+        cursor.close();
         return cursor.getCount();
+
 
     }
 }
