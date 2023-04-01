@@ -119,12 +119,6 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         chronometer.setFormat("%s");
         chronometer.setBase(SystemClock.elapsedRealtime());
 
-        //creating database
-        MyDbHandler db = new MyDbHandler(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
-
-        //creating board object now
-        Board dbBoard0 = new Board();
-        db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
 
         //url modifiers here - number corresponds to the async task using the url
         String url = "http://" + ipAddressValue + "/";
@@ -228,61 +222,9 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                     gyroyData.add(String.valueOf(gyroy.get(j)));
                                     gyrozData.add(String.valueOf(gyroz.get(j)));
 
-                                    dbBoard0.setTime(time + j * 10);
-                                    dbBoard0.setSensor1(accelxData.get(j));
-                                    dbBoard0.setSensor2(accelyData.get(j));
-                                    dbBoard0.setSensor3(accelzData.get(j));
-                                    dbBoard0.setSensor4(gyroxData.get(j));
-                                    dbBoard0.setSensor5(gyroyData.get(j));
-                                    dbBoard0.setSensor6(gyrozData.get(j));
 
-                                    //**************************************************************************************************************************
-                                  /*  if(timerStatus==1){
-                                        switch(i){
-                                            case 0:
-                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_0);
-                                                break;
-                                            case 1:
-                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_1);
-                                                break;
-                                            case 2:
-                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_2);
-                                                break;
-                                            case 3:
-                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_3);
-                                                break;
-                                            case 4:
-                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_4);
-                                                break;
-                                            case 5:
-                                                db.addSensorData(dbBoard0, MyDbHandler.BOARD_TABLE_5);
-                                                break;
 
-                                        }
-                                    }*/
-
-                                    //**************************************************************************************************************************
                                 }
-
-
-                                //**************************************************************************************************************************
-                                //creating list
-
-                                 /*   String [] dbBoards = {MyDbHandler.BOARD_TABLE_0,MyDbHandler.BOARD_TABLE_1,MyDbHandler.BOARD_TABLE_2,MyDbHandler.BOARD_TABLE_3,MyDbHandler.BOARD_TABLE_4,MyDbHandler.BOARD_TABLE_5};
-                                    List<Board> allSensorData = db.getAllData(dbBoards[i]);
-                                    for(Board tempBoard: allSensorData){
-                                        Log.d("finn", "\nId: " + tempBoard.getId() + "\n"
-                                                +dbBoards[i] + "\n"
-                                                +"Time: " + tempBoard.getTime() + "\n"
-                                                + "Sensor 1 Data: " + tempBoard.getSensor1() + "\n"
-                                                + "Sensor 2 Data: " + tempBoard.getSensor2() + "\n"
-                                                + "Sensor 3 Data: " + tempBoard.getSensor3() + "\n"
-                                                + "Sensor 4 Data: " + tempBoard.getSensor4() + "\n"
-                                                + "Sensor 5 Data: " + tempBoard.getSensor5() + "\n"
-                                                + "Sensor 6 Data: " + tempBoard.getSensor6() + "\n");
-                                    }*/
-
-                                //**************************************************************************************************************************
 
 
                                 Log.d("Shubham", "onResponse: ID is " +
@@ -497,10 +439,6 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                     };
                     requestQueue.add(postRequest);//adding post request
                 }
-
-
-
-
 
 
                     handler4.postDelayed(this, 500);//running task
