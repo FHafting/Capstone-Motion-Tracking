@@ -41,10 +41,35 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     TextView ipAddressView, test1view, pingTestView;
     Button start, reset, download, history;
 
+    int numBoards = FixedParameters.numBoards;
+    int numPackets = FixedParameters.packetSize;
+
+
+    //characteristics
     int dataStatus = 0;     //when device is receiving data from ESP 32 Wifi
-    String statusString = "Not Connected";
     int timerStatus = 0;    //when timer is initiated
-    int pingInProgress = 0; //when app initiates a ping to ESP 32 Wifi, this equals 1
+    int pingDuration = 0;
+    int activeDevices = 0;
+    String dataRate="";
+
+    //variables to hold incoming data
+    String time;
+    String id;
+
+    //other variables
+    String statusString = "Not Connected";
+
+    //variables for main loop (async task 1)
+    int flag1;
+    int flag2;
+    int timeDly;
+
+    //variables for response time
+    int pingInProgress = 0;
+    String postPing;
+    int postFlag1;
+    int postFlag2;
+    int pingCounter;
     //step 1: post request to send a key value pair "message" and "ping" to ESP32 Wifi using /message
             //as soon as it is successful, a flag tracks the exact time at this instant in postFlag1
     //step 2: ESP 32 Wifi receives it and stores it in a string called "incomingMessage"
@@ -52,22 +77,12 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 //if there is a value in incomingMessage, it makes postPing=1
                 //postPing is transmitted to Android app via get request in async task 3
                 //as soon as this variable turns to 1, it invokes an if statement inside task 4 which then initiates a second flag in postFlag2
-    int pingDuration = 0;
-    String postPing;
-    int postFlag1;
-    int postFlag2;
-    int pingCounter;
+                //difference in time /2 = pingDuration
 
-    String time;
-    String id;
-    int activeDevices = 0;
-    int temp100;
-    int flag1;
-    int flag2;
-    int timeDly;
-    int numBoards = FixedParameters.numBoards;
-    int numPackets = FixedParameters.packetSize;
-    String dataRate="";
+
+
+
+
 
 
 
@@ -86,7 +101,8 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         download = findViewById(R.id.download_btn);
         history = findViewById(R.id.history_btn);
         pingTestView = findViewById(R.id.ping_test);
-        //retrieving IP address
+
+        //retrieving IP address and initializing
         Intent intent = getIntent();
         String ipAddressValue = intent.getStringExtra("ipAddress");
         String temp = "IP Address: " + ipAddressValue + "\n"
@@ -98,7 +114,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         RequestQueue requestQueue;
         requestQueue = Volley.newRequestQueue(this);
 
-        //adding timer
+        //creating timer - chronometer - for visual time
         Chronometer chronometer = findViewById(R.id.chronometer);
         chronometer.setFormat("%s");
         chronometer.setBase(SystemClock.elapsedRealtime());
@@ -110,7 +126,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         Board dbBoard0 = new Board();
         db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
 
-        //url modifiers here
+        //url modifiers here - number corresponds to the async task using the url
         String url = "http://" + ipAddressValue + "/";
         String url3 = "http://" + ipAddressValue + "/values";
         String url4 = "http://" + ipAddressValue + "/message";
@@ -166,7 +182,6 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         int[] statusCounter = new int[numBoards];
         int[] prevTime = new int[numBoards];
         int[] currentTime = new int[numBoards];
-
 
 //*******************************************************************************************************************
        //async task 1: get and store JSON data
