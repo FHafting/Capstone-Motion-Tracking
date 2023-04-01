@@ -19,6 +19,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
 import com.example.uwowirelessmotionsensortrackingapp.params.FixedParameters;
@@ -29,27 +30,47 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class DeviceOptionsActivity extends AppCompatActivity {
 
     //declarations
-    TextView ipAddressView, test1view;
-    Button start,reset,download,history;
-    int dataStatus=0;
+    TextView ipAddressView, test1view, pingTestView;
+    Button start, reset, download, history;
+
+    int dataStatus = 0;     //when device is receiving data from ESP 32 Wifi
     String statusString = "Not Connected";
-    int timerStatus=0;
+    int timerStatus = 0;    //when timer is initiated
+    int pingInProgress = 0; //when app initiates a ping to ESP 32 Wifi, this equals 1
+    //step 1: post request to send a key value pair "message" and "ping" to ESP32 Wifi using /message
+            //as soon as it is successful, a flag tracks the exact time at this instant in postFlag1
+    //step 2: ESP 32 Wifi receives it and stores it in a string called "incomingMessage"
+    //step 3: ESP 32 wifi invokes a function called pingTest() which, every 10 ms checks for value in message variable
+                //if there is a value in incomingMessage, it makes postPing=1
+                //postPing is transmitted to Android app via get request in async task 3
+                //as soon as this variable turns to 1, it invokes an if statement inside task 4 which then initiates a second flag in postFlag2
+    int pingDuration = 0;
+    String postPing;
+    int postFlag1;
+    int postFlag2;
+    int pingCounter;
+
     String time;
     String id;
-    int activeDevices=0;
+    int activeDevices = 0;
     int temp100;
     int flag1;
     int flag2;
     int timeDly;
     int numBoards = FixedParameters.numBoards;
     int numPackets = FixedParameters.packetSize;
-    String dataRate;
+    String dataRate="";
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,22 +85,18 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         reset = findViewById(R.id.reset_btn);
         download = findViewById(R.id.download_btn);
         history = findViewById(R.id.history_btn);
+        pingTestView = findViewById(R.id.ping_test);
         //retrieving IP address
         Intent intent = getIntent();
         String ipAddressValue = intent.getStringExtra("ipAddress");
-
-
-
-        String temp="IP Address: " + ipAddressValue + "\n"
-                +"Status: "+statusString+"\n"
-                +"Session Duration:";
-
+        String temp = "IP Address: " + ipAddressValue + "\n"
+                + "Status: " + statusString + "\n"
+                + "Session Duration:";
         ipAddressView.setText(temp);
 
-        //setting up volley
+        //setting up volley for async task 1
         RequestQueue requestQueue;
         requestQueue = Volley.newRequestQueue(this);
-
 
         //adding timer
         Chronometer chronometer = findViewById(R.id.chronometer);
@@ -91,52 +108,51 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
         //creating board object now
         Board dbBoard0 = new Board();
-
         db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
 
+        //url modifiers here
+        String url = "http://" + ipAddressValue + "/";
+        String url3 = "http://" + ipAddressValue + "/values";
+        String url4 = "http://" + ipAddressValue + "/message";
 
-
-        //adding timer functionality
+        //buttons here
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                if(dataStatus==1){
+                if (dataStatus == 1) {
 
                     chronometer.setBase(SystemClock.elapsedRealtime());
                     chronometer.start();
-                    timerStatus=1;
-                }else{
-                    Toast.makeText(DeviceOptionsActivity.this, "Device not Connected" , Toast.LENGTH_SHORT).show();
+                    timerStatus = 1;
+                } else {
+                    Toast.makeText(DeviceOptionsActivity.this, "Device not Connected", Toast.LENGTH_SHORT).show();
                 }
-
 
 
             }
         });
-
         reset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 chronometer.stop();
                 chronometer.setBase(SystemClock.elapsedRealtime());
-                timerStatus=0;
+                timerStatus = 0;
                 //**************************************************************************************************************************
-               // db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
+                // db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
                 //**************************************************************************************************************************
             }
         });
-
-
         download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
+
             }
         });
 
 
-        String url="http://"+ipAddressValue+"/";
+
         //String url = "https://run.mocky.io/v3/3276125e-d145-48b4-9dd0-42d232382435";
         ArrayList<String> accelxData = new ArrayList<>();
         ArrayList<String> accelyData = new ArrayList<>();
@@ -146,15 +162,16 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         ArrayList<String> gyrozData = new ArrayList<>();
 
 
-        int [] boardStatus=new int[numBoards];
-        int [] statusCounter=new int[numBoards];
-        int [] prevTime=new int[numBoards];
-        int [] currentTime=new int[numBoards];
+        int[] boardStatus = new int[numBoards];
+        int[] statusCounter = new int[numBoards];
+        int[] prevTime = new int[numBoards];
+        int[] currentTime = new int[numBoards];
 
-        // Task Scheduler using Handler and Runnable
+
 //*******************************************************************************************************************
+       //async task 1: get and store JSON data
         final android.os.Handler handler = new Handler();
-        Runnable run = new Runnable(){
+        Runnable run = new Runnable() {
             @Override
             public void run() {
 
@@ -166,14 +183,14 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            dataStatus=1;
+                            dataStatus = 1;
                             JSONArray boards = response.getJSONArray("boards");
 
-                            for (int i=0; i<boards.length();i++){
+                            for (int i = 0; i < boards.length(); i++) {
                                 JSONObject board = boards.getJSONObject(i);
                                 //time and id
-                                time=board.getString("time");
-                                id=board.getString("id");
+                                time = board.getString("time");
+                                id = board.getString("id");
 
 
                                 //adding time in current time array for device status
@@ -187,7 +204,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                 JSONArray gyroy = board.getJSONArray("gyroy");
                                 JSONArray gyroz = board.getJSONArray("gyroz");
 
-                                for (int j=0; j<accelx.length();j++) {
+                                for (int j = 0; j < accelx.length(); j++) {
 
                                     accelxData.add(String.valueOf(accelx.get(j)));
                                     accelyData.add(String.valueOf(accely.get(j)));
@@ -196,7 +213,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                     gyroyData.add(String.valueOf(gyroy.get(j)));
                                     gyrozData.add(String.valueOf(gyroz.get(j)));
 
-                                    dbBoard0.setTime(time+j*10);
+                                    dbBoard0.setTime(time + j * 10);
                                     dbBoard0.setSensor1(accelxData.get(j));
                                     dbBoard0.setSensor2(accelyData.get(j));
                                     dbBoard0.setSensor3(accelzData.get(j));
@@ -233,13 +250,6 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                 }
 
 
-
-
-
-
-
-
-
                                 //**************************************************************************************************************************
                                 //creating list
 
@@ -260,10 +270,8 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                 //**************************************************************************************************************************
 
 
-
-
                                 Log.d("Shubham", "onResponse: ID is " +
-                                        id + " and time is " + time+accelxData+accelyData+accelzData+gyroxData+gyroyData+gyrozData);
+                                        id + " and time is " + time + accelxData + accelyData + accelzData + gyroxData + gyroyData + gyrozData);
 
                                 //clear data
                                 accelxData.clear();
@@ -283,7 +291,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                     public void onErrorResponse(VolleyError error) {
                         Log.d("Shubham", "Something went wrong");
 
-                        dataStatus=0;
+                        dataStatus = 0;
                     }
                 });
                 requestQueue.add(jsonObjectRequest);
@@ -291,8 +299,8 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
                 //noting the end time of execution
                 flag2 = (int) System.currentTimeMillis();
-                timeDly = 90-(flag2-flag1);
-                Log.d("shiv2", "time delay for task 1: "+ timeDly);
+                timeDly = FixedParameters.numBoards*10 - (flag2 - flag1);
+                Log.d("shiv2", "time delay for task 1: " + timeDly);
 
                 handler.postDelayed(this, timeDly);
 
@@ -301,109 +309,192 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         handler.post(run);
 
 //*******************************************************************************************************************
+        //async task 2: statements for:
+        //dataStatus - whether sensor data is coming in
+        //timerStatus - whether timer is on
+        //activeDevices - how many senders are connected
 
         final android.os.Handler handler2 = new Handler();
-        Runnable run2 = new Runnable(){
+        Runnable run2 = new Runnable() {
             @Override
             public void run() {
 
                 //setting up status
-                if(dataStatus==1){
-                    statusString="Connected";
-                }else{
-                    statusString="Not Connected";
-                    timerStatus=0;
+                if (dataStatus == 1) {
+                    statusString = "Connected";
+                } else {
+                    statusString = "Not Connected";
+                    timerStatus = 0;
                 }
 
 
-                if(timerStatus==0){
+                if (timerStatus == 0) {
                     chronometer.stop();
                     chronometer.setBase(SystemClock.elapsedRealtime());
                 }
 
                 //active devices
-                for(int i =0; i<currentTime.length; i++){
+                for (int i = 0; i < currentTime.length; i++) {
 
-                    if(currentTime[i]-prevTime[i]!=0){
-                        statusCounter[i] ++;
+                    if (currentTime[i] - prevTime[i] != 0) {
+                        statusCounter[i]++;
 
-                    }else{
-                        statusCounter[i] --;
+                    } else {
+                        statusCounter[i]--;
 
                     }
 
-                    if(statusCounter[i]>5){
-                        boardStatus[i]=1;
-                        statusCounter[i]=0;
+                    if (statusCounter[i] > 5) {
+                        boardStatus[i] = 1;
+                        statusCounter[i] = 0;
                     }
-                    if(statusCounter[i]<-5){
-                        boardStatus[i]=0;
-                        statusCounter[i]=0;
+                    if (statusCounter[i] < -5) {
+                        boardStatus[i] = 0;
+                        statusCounter[i] = 0;
                     }
 
-                    activeDevices=activeDevices+boardStatus[i];
+                    activeDevices = activeDevices + boardStatus[i];
 
-                    prevTime[i]=currentTime[i];
+                    prevTime[i] = currentTime[i];
                 }
 
 
-
-                //status update
-                String temp="IP Address: " + ipAddressValue + "\n"
-                        +"Status: "+statusString+"\n"
-                        +"Active Devices: "+activeDevices+ "\n"
-                        +"DataRate (Packets/s): "+dataRate+ "\n"
-                        +"Session Duration:";
+                //status update - first textview
+                String temp = "IP Address: " + ipAddressValue + "\n"
+                        + "Status: " + statusString + "\n"
+                        + "Active Devices: " + activeDevices + "\n"
+                        + "Datarate (Packets/s): " + dataRate + "\n"
+                        + "Session Duration:";
                 ipAddressView.setText(temp);
 
-                Log.d("boardstatus", "boardStatus: "+ Arrays.toString(statusCounter)+activeDevices);
+
+
+                Log.d("boardstatus", "boardStatus: " + Arrays.toString(statusCounter) + activeDevices);
                 //must occur after status update
 
 
-
                 handler2.postDelayed(this, timeDly);
-                activeDevices=0;
+                activeDevices = 0;
             }
         };
         handler2.post(run2);
 
-
 //*******************************************************************************************************************
-        String url2="http://"+ipAddressValue+"/datarate";
+        //async task 3: statements for /values
+        //retrieves and stores these values in variables
+        //dataRate - transmits the amount of packets/second received by esp 32 wifi
+        //postPing - incoming variable from ESP 32 wifi that states that it received the post request
 
         final android.os.Handler handler3 = new Handler();
-        Runnable run3 = new Runnable(){
+        Runnable run3 = new Runnable() {
             @Override
             public void run() {
 
-                JsonObjectRequest jsonObjectRequest2 = new JsonObjectRequest(Request.Method.GET,
-                        url2, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response2) {
-                        try {
-                            dataRate = response2.getString("dataRate");
-                            Log.d("jenn",dataRate);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+                if(dataStatus==1){
+                    JsonObjectRequest jsonObjectRequest3 = new JsonObjectRequest(Request.Method.GET,
+                            url3, null, new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response3) {
+                            try {
+                                dataRate = response3.getString("dataRate");
+                                postPing = response3.getString("postPing");
+                                Log.d("jenn", dataRate);
+                                Log.d("courtney", postPing);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.d("jenn", "Something went wrong");
+                            Log.d("courtney", "cannot make get request");
+
+                        }
+                    });
+                    requestQueue.add(jsonObjectRequest3);
+
+                    if(pingInProgress==1){
+                        if(postPing!=""){
+                            postFlag2 = (int) System.currentTimeMillis();
+                            pingDuration = pingDuration + postFlag2-postFlag1;
+                            pingInProgress=0;
+                            pingCounter++;
+                            //Log.d("courtney","pingTest Completed. Duration: "+pingDuration);
 
                         }
                     }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("jenn", "Something went wrong");
 
+                    if(pingCounter==10){
+                        pingDuration=pingDuration/10;
+                        Log.d("courtney","pingTest Completed. Duration: "+ pingDuration);
+                        pingCounter=0;
+                        //status update - second textview
+                        String temp2 = "Ping Duration: " + pingDuration + "ms"+"\n"
 
+                                ;
+                        pingTestView.setText(temp2);
                     }
-                });
-                requestQueue.add(jsonObjectRequest2);
 
-                handler3.postDelayed(this, 1000);
 
+                }
+
+                handler3.postDelayed(this, 5);
             }
         };
         handler3.post(run3);
 //*******************************************************************************************************************
+        //async task 4: statements for /message
+
+        final android.os.Handler handler4 = new Handler();
+        Runnable run4 = new Runnable() {
+            @Override
+            public void run() {
+
+
+                if (pingInProgress == 0) {
+                    StringRequest postRequest = new StringRequest(Request.Method.POST, url4,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    Log.d("courtney", "Message Sent");
+
+                                    postFlag1 = (int) System.currentTimeMillis();
+                                    pingInProgress = 1;
+                                    // Handle response
+                                }
+                            },
+                            new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    // Handle error
+                                    Log.d("courtney", "Something went wrong");
+                                }
+                            }
+                    ) {
+                        @Override
+                        protected Map<String, String> getParams() {
+                            Map<String, String> params = new HashMap<String, String>();
+                            params.put("message", "ping");
+                            return params;
+                        }
+                    };
+                    requestQueue.add(postRequest);//adding post request
+                }
+
+
+
+
+
+
+                    handler4.postDelayed(this, 500);//running task
+            }
+        };
+        handler4.post(run4);
+
+// *******************************************************************************************************************
+
 
     }
 

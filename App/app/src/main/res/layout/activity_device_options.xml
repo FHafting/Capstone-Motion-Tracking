@@ -17,6 +17,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/ping_test"
+        android:layout_height="75dp"
+        android:layout_marginStart="10sp"
+        android:layout_marginEnd="23dp"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:layout_width="280dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ip_address" />
+
     <Chronometer
         android:id="@+id/chronometer"
         android:layout_width="wrap_content"
@@ -24,7 +35,7 @@
         android:layout_marginStart="10sp"
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ip_address" />
+        app:layout_constraintTop_toBottomOf="@+id/ping_test" />
 
 
     <Button
@@ -46,6 +57,7 @@
         android:layout_marginEnd="20dp"
         android:text="reset"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/ping_test"
         app:layout_constraintTop_toBottomOf="@+id/start_btn" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -57,7 +69,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/reset_btn" />
+        app:layout_constraintTop_toBottomOf="@+id/chronometer" />
 
     <Button
         android:id="@+id/download_btn"
