@@ -2,15 +2,21 @@ package com.example.uwowirelessmotionsensortrackingapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.bluetooth.BluetoothClass;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Chronometer;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,14 +29,19 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
 import com.example.uwowirelessmotionsensortrackingapp.params.FixedParameters;
+import com.opencsv.CSVWriter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +51,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     //declarations
     TextView ipAddressView, test1view, pingTestView;
     Button start, reset, download, history;
+    Spinner boardSelect, sensorSelect;
 
     int numBoards = FixedParameters.numBoards;
     int numPackets = FixedParameters.packetSize;
@@ -50,11 +62,25 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     int timerStatus = 0;    //when timer is initiated
     int pingDuration = 0;
     int activeDevices = 0;
-    String dataRate="";
+    String dataRate = "";
 
     //variables to hold incoming data
-    String time;
-    String id;
+    int time;
+    int id;
+    ArrayList<String> allBoardData = new ArrayList<>();
+    String[][] allBoardData2 = new String[numPackets][7*numBoards];
+    ArrayList<String> board0Data = new ArrayList<>();
+    ArrayList<String> board1Data = new ArrayList<>();
+    ArrayList<String> board2Data = new ArrayList<>();
+    ArrayList<String> board3Data = new ArrayList<>();
+    ArrayList<String> board4Data = new ArrayList<>();
+    ArrayList<String> board5Data = new ArrayList<>();
+    ArrayList<String> board6Data = new ArrayList<>();
+    ArrayList<String> board7Data = new ArrayList<>();
+    ArrayList<String> board8Data = new ArrayList<>();
+    ArrayList<String> board9Data = new ArrayList<>();
+    //data format: time, accelx, accely, accelz, qyrox, qyroy, qyroz repeats for number of packets
+
 
     //other variables
     String statusString = "Not Connected";
@@ -71,17 +97,23 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     int postFlag2;
     int pingCounter;
     //step 1: post request to send a key value pair "message" and "ping" to ESP32 Wifi using /message
-            //as soon as it is successful, a flag tracks the exact time at this instant in postFlag1
+    //as soon as it is successful, a flag tracks the exact time at this instant in postFlag1
     //step 2: ESP 32 Wifi receives it and stores it in a string called "incomingMessage"
     //step 3: ESP 32 wifi invokes a function called pingTest() which, every 10 ms checks for value in message variable
-                //if there is a value in incomingMessage, it makes postPing=1
-                //postPing is transmitted to Android app via get request in async task 3
-                //as soon as this variable turns to 1, it invokes an if statement inside task 4 which then initiates a second flag in postFlag2
-                //difference in time /2 = pingDuration
+    //if there is a value in incomingMessage, it makes postPing=1
+    //postPing is transmitted to Android app via get request in async task 3
+    //as soon as this variable turns to 1, it invokes an if statement inside task 4 which then initiates a second flag in postFlag2
+    //difference in time /2 = pingDuration
+
+    //initializing shared preferences here
+    SharedPreferences prefs;
+    SharedPreferences.Editor editor;
 
 
-
-
+    //csv file parameters
+    int csvInProgress = 0;
+    File file = new File(Environment.getExternalStorageDirectory(), "abc.csv");
+    CSVWriter writer;
 
 
 
@@ -94,13 +126,14 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
         //linking
         ipAddressView = findViewById(R.id.ip_address);
-        test1view = findViewById(R.id.test1_view);
-        test1view.setMovementMethod(new ScrollingMovementMethod());
+        boardSelect = (Spinner) findViewById(R.id.spinner1);
+        sensorSelect = (Spinner) findViewById(R.id.spinner2);
         start = findViewById(R.id.start_btn);
         reset = findViewById(R.id.reset_btn);
         download = findViewById(R.id.download_btn);
-        history = findViewById(R.id.history_btn);
+
         pingTestView = findViewById(R.id.ping_test);
+
 
         //retrieving IP address and initializing
         Intent intent = getIntent();
@@ -119,11 +152,47 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         chronometer.setFormat("%s");
         chronometer.setBase(SystemClock.elapsedRealtime());
 
+        //creating database
+        MyDbHandler db = new MyDbHandler(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
+
+        //creating board object now
+        Board dbBoard0 = new Board();
+        db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
+
+        //adding/updating data in sharedPreferences
+        prefs = getSharedPreferences("my_prefs", MODE_PRIVATE);
+        editor = prefs.edit();
 
         //url modifiers here - number corresponds to the async task using the url
+        String tempUrl = "https://run.mocky.io/v3/51a34b15-6260-4e3e-9cf4-95021e42b4be";
         String url = "http://" + ipAddressValue + "/";
         String url3 = "http://" + ipAddressValue + "/values";
         String url4 = "http://" + ipAddressValue + "/message";
+
+
+        //spinners here
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.boardTypes, android.R.layout.simple_spinner_item);
+        // Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        boardSelect.setAdapter(adapter);
+
+        // Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(this,
+                R.array.sensorTypes, android.R.layout.simple_spinner_item);
+        // Specify the layout to use when the list of choices appears
+        adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Apply the adapter to the spinner
+        sensorSelect.setAdapter(adapter2);
+
+        int boardSelected = 0;
+        int sensorSelected = 0;
+
+
+
+
 
         //buttons here
         start.setOnClickListener(new View.OnClickListener() {
@@ -148,9 +217,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 chronometer.stop();
                 chronometer.setBase(SystemClock.elapsedRealtime());
                 timerStatus = 0;
-                //**************************************************************************************************************************
-                // db.deleteDb(com.example.uwowirelessmotionsensortrackingapp.DeviceOptionsActivity.this);
-                //**************************************************************************************************************************
+
             }
         });
         download.setOnClickListener(new View.OnClickListener() {
@@ -161,16 +228,11 @@ public class DeviceOptionsActivity extends AppCompatActivity {
             }
         });
 
+        String temp2 = "Ping Duration: " + pingDuration + "ms" + "\n"
+                + "Session Duration:";
+        pingTestView.setText(temp2);
 
-
-        //String url = "https://run.mocky.io/v3/3276125e-d145-48b4-9dd0-42d232382435";
-        ArrayList<String> accelxData = new ArrayList<>();
-        ArrayList<String> accelyData = new ArrayList<>();
-        ArrayList<String> accelzData = new ArrayList<>();
-        ArrayList<String> gyroxData = new ArrayList<>();
-        ArrayList<String> gyroyData = new ArrayList<>();
-        ArrayList<String> gyrozData = new ArrayList<>();
-
+        //variables for calculating Active Devices
 
         int[] boardStatus = new int[numBoards];
         int[] statusCounter = new int[numBoards];
@@ -178,7 +240,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         int[] currentTime = new int[numBoards];
 
 //*******************************************************************************************************************
-       //async task 1: get and store JSON data
+        //async task 1: get and store JSON data
         final android.os.Handler handler = new Handler();
         Runnable run = new Runnable() {
             @Override
@@ -192,15 +254,32 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
+
+
                             dataStatus = 1;
                             JSONArray boards = response.getJSONArray("boards");
 
-                            for (int i = 0; i < boards.length(); i++) {
+                            //clear data
+                            board0Data.clear();
+                            board1Data.clear();
+                            board2Data.clear();
+                            board3Data.clear();
+                            board4Data.clear();
+                            board5Data.clear();
+                            board6Data.clear();
+                            board7Data.clear();
+                            board8Data.clear();
+                            board9Data.clear();
+
+                            for (int i = 0; i < boards.length(); i++) {     //cycles through number of board objects
+
+                                allBoardData.clear();
                                 JSONObject board = boards.getJSONObject(i);
                                 //time and id
-                                time = board.getString("time");
-                                id = board.getString("id");
+                                time = Integer.parseInt(board.getString("time"));
+                                id = Integer.parseInt(board.getString("id"));
 
+                                Log.d("unique", String.valueOf(time));
 
                                 //adding time in current time array for device status
                                 currentTime[i] = Integer.valueOf(time);
@@ -214,29 +293,61 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                 JSONArray gyroz = board.getJSONArray("gyroz");
 
                                 for (int j = 0; j < accelx.length(); j++) {
+                                    allBoardData.add(String.valueOf((time+10*j)));
+                                    allBoardData.add((String.valueOf(accelx.get(j))));
+                                    allBoardData.add((String.valueOf(accely.get(j))));
+                                    allBoardData.add((String.valueOf(accelz.get(j))));
+                                    allBoardData.add((String.valueOf(gyrox.get(j))));
+                                    allBoardData.add((String.valueOf(gyroy.get(j))));
+                                    allBoardData.add((String.valueOf(gyroz.get(j))));
 
-                                    accelxData.add(String.valueOf(accelx.get(j)));
-                                    accelyData.add(String.valueOf(accely.get(j)));
-                                    accelzData.add(String.valueOf(accelz.get(j)));
-                                    gyroxData.add(String.valueOf(gyrox.get(j)));
-                                    gyroyData.add(String.valueOf(gyroy.get(j)));
-                                    gyrozData.add(String.valueOf(gyroz.get(j)));
+                                    allBoardData2[j][7*i] = (String.valueOf((time+10*j)));
+                                    allBoardData2[j][7*i+1] = ((String.valueOf(accelx.get(j))));
+                                    allBoardData2[j][7*i+2] = ((String.valueOf(accely.get(j))));
+                                    allBoardData2[j][7*i+3] = ((String.valueOf(accelx.get(j))));
+                                    allBoardData2[j][7*i+4] = ((String.valueOf(gyrox.get(j))));
+                                    allBoardData2[j][7*i+5] = ((String.valueOf(gyroy.get(j))));
+                                    allBoardData2[j][7*i+6] = ((String.valueOf(gyroz.get(j))));
 
+                                    }
 
-
+                                switch(i){
+                                    case 0:
+                                        board0Data.addAll(allBoardData);
+                                        break;
+                                    case 1:
+                                        board1Data.addAll(allBoardData);
+                                        break;
+                                    case 2:
+                                        board2Data.addAll(allBoardData);
+                                        break;
+                                    case 3:
+                                        board3Data.addAll(allBoardData);
+                                        break;
+                                    case 4:
+                                        board4Data.addAll(allBoardData);
+                                        break;
+                                    case 5:
+                                        board5Data.addAll(allBoardData);
+                                        break;
+                                    case 6:
+                                        board6Data.addAll(allBoardData);
+                                        break;
+                                    case 7:
+                                        board7Data.addAll(allBoardData);
+                                        break;
+                                    case 8:
+                                        board8Data.addAll(allBoardData);
+                                        break;
+                                    case 9:
+                                        board9Data.addAll(allBoardData);
+                                        break;
                                 }
 
+                                Log.d("wowza",String.valueOf(board0Data)+ String.valueOf(board9Data));
 
-                                Log.d("Shubham", "onResponse: ID is " +
-                                        id + " and time is " + time + accelxData + accelyData + accelzData + gyroxData + gyroyData + gyrozData);
 
-                                //clear data
-                                accelxData.clear();
-                                accelyData.clear();
-                                accelzData.clear();
-                                gyroxData.clear();
-                                gyroyData.clear();
-                                gyrozData.clear();
+
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -256,14 +367,17 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
                 //noting the end time of execution
                 flag2 = (int) System.currentTimeMillis();
-                timeDly = FixedParameters.numBoards*10 - (flag2 - flag1);
+                timeDly = FixedParameters.numBoards * 10 - (flag2 - flag1);
                 Log.d("shiv2", "time delay for task 1: " + timeDly);
+
+
 
                 handler.postDelayed(this, timeDly);
 
             }
         };
         handler.post(run);
+
 
 //*******************************************************************************************************************
         //async task 2: statements for:
@@ -319,11 +433,10 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 //status update - first textview
                 String temp = "IP Address: " + ipAddressValue + "\n"
                         + "Status: " + statusString + "\n"
-                        + "Active Devices: " + activeDevices + "\n"
+                        + "Active Senders: " + activeDevices + "\n"
                         + "Datarate (Packets/s): " + dataRate + "\n"
-                        + "Session Duration:";
+                        ;
                 ipAddressView.setText(temp);
-
 
 
                 Log.d("boardstatus", "boardStatus: " + Arrays.toString(statusCounter) + activeDevices);
@@ -347,7 +460,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
             @Override
             public void run() {
 
-                if(dataStatus==1){
+                if (dataStatus == 1) {
                     JsonObjectRequest jsonObjectRequest3 = new JsonObjectRequest(Request.Method.GET,
                             url3, null, new Response.Listener<JSONObject>() {
                         @Override
@@ -372,25 +485,24 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                     });
                     requestQueue.add(jsonObjectRequest3);
 
-                    if(pingInProgress==1){
-                        if(postPing!=""){
+                    if (pingInProgress == 1) {
+                        if (postPing != "") {
                             postFlag2 = (int) System.currentTimeMillis();
-                            pingDuration = pingDuration + postFlag2-postFlag1;
-                            pingInProgress=0;
+                            pingDuration = pingDuration + postFlag2 - postFlag1;
+                            pingInProgress = 0;
                             pingCounter++;
                             //Log.d("courtney","pingTest Completed. Duration: "+pingDuration);
 
                         }
                     }
 
-                    if(pingCounter==10){
-                        pingDuration=pingDuration/10;
-                        Log.d("courtney","pingTest Completed. Duration: "+ pingDuration);
-                        pingCounter=0;
+                    if (pingCounter == 5) {
+                        pingDuration = pingDuration / 10;
+                        Log.d("courtney", "pingTest Completed. Duration: " + pingDuration);
+                        pingCounter = 0;
                         //status update - second textview
-                        String temp2 = "Ping Duration: " + pingDuration + "ms"+"\n"
-
-                                ;
+                        String temp2 = "Ping Duration: " + pingDuration + "ms" + "\n"
+                                + "Session Duration:";
                         pingTestView.setText(temp2);
                     }
 
@@ -441,15 +553,73 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                 }
 
 
-                    handler4.postDelayed(this, 500);//running task
+                handler4.postDelayed(this, 500);//running task
             }
         };
         handler4.post(run4);
 
 // *******************************************************************************************************************
+        //async task 5: csv file and spinners
+
+
+        final android.os.Handler handler5 = new Handler();
+        Runnable run5 = new Runnable() {
+            @Override
+            public void run() {
+
+
+
+
+
+                if(timerStatus==1){
+                    if(csvInProgress==0){
+                        try {
+                            writer = new CSVWriter(new FileWriter(file));
+                            csvInProgress=1;
+                           // String[] temp = {"time_board_0","accelx_board_0","accely_board_0","accelz_board_0","gyrox_board_0","gyroy_board_0","gyroz_board_0"};
+                           // writer.writeNext(temp);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            Log.d("csv","file not created");
+                        }
+                    }else{
+
+                        for(int j=0;j<numPackets;j++){
+                            String temp[] = allBoardData2[j];
+                            writer.writeNext(temp);
+                        }
+
+
+                    }
+
+
+                }else{
+                    if(csvInProgress==1){
+                        try {
+                            writer.close();
+                            Log.d("csv","file closed!");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        csvInProgress=0;
+                    }
+                }
+
+                handler5.postDelayed(this, timeDly);//running task
+            }
+        };
+        handler5.post(run5);
+
+// *******************************************************************************************************************
+
+
+
 
 
     }
 
 
+
 }
+
