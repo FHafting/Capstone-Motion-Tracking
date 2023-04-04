@@ -29,6 +29,13 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
 import com.example.uwowirelessmotionsensortrackingapp.params.FixedParameters;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.opencsv.CSVWriter;
 
 import org.json.JSONArray;
@@ -46,12 +53,13 @@ import java.util.List;
 import java.util.Map;
 
 
-public class DeviceOptionsActivity extends AppCompatActivity {
+public class DeviceOptionsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
     //declarations
     TextView ipAddressView, test1view, pingTestView;
     Button start, reset, download, history;
     Spinner boardSelect, sensorSelect;
+    LineChart chart1;
 
     int numBoards = FixedParameters.numBoards;
     int numPackets = FixedParameters.packetSize;
@@ -68,7 +76,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     int time;
     int id;
     ArrayList<String> allBoardData = new ArrayList<>();
-    String[][] allBoardData2 = new String[numPackets][7*numBoards];
+    float[][] allBoardData2 = new float[numPackets][7*numBoards];
     ArrayList<String> board0Data = new ArrayList<>();
     ArrayList<String> board1Data = new ArrayList<>();
     ArrayList<String> board2Data = new ArrayList<>();
@@ -81,6 +89,11 @@ public class DeviceOptionsActivity extends AppCompatActivity {
     ArrayList<String> board9Data = new ArrayList<>();
     //data format: time, accelx, accely, accelz, qyrox, qyroy, qyroz repeats for number of packets
 
+    ArrayList<Entry>chartData = new ArrayList<Entry>();
+    int chartIncrement=0;
+    int parameterChanged = 0;
+    float x = 0;
+    float numChartEntries=500;
 
     //other variables
     String statusString = "Not Connected";
@@ -112,9 +125,11 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
     //csv file parameters
     int csvInProgress = 0;
-    File file = new File(Environment.getExternalStorageDirectory(), "abc.csv");
-    CSVWriter writer;
 
+
+    //spinner
+    int boardSelected = 0;
+    int sensorSelected = 0;
 
 
 
@@ -126,11 +141,12 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
         //linking
         ipAddressView = findViewById(R.id.ip_address);
-        boardSelect = (Spinner) findViewById(R.id.spinner1);
-        sensorSelect = (Spinner) findViewById(R.id.spinner2);
+        boardSelect = findViewById(R.id.spinner1);
+        sensorSelect = findViewById(R.id.spinner2);
         start = findViewById(R.id.start_btn);
         reset = findViewById(R.id.reset_btn);
         download = findViewById(R.id.download_btn);
+        chart1 = findViewById(R.id.line_chart);
 
         pingTestView = findViewById(R.id.ping_test);
 
@@ -178,6 +194,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
         boardSelect.setAdapter(adapter);
+        boardSelect.setOnItemSelectedListener(this);
 
         // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(this,
@@ -186,11 +203,23 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
         sensorSelect.setAdapter(adapter2);
-
-        int boardSelected = 0;
-        int sensorSelected = 0;
+        sensorSelect.setOnItemSelectedListener(this);
 
 
+
+        //chart stuff here
+        for(float i=0;i<numChartEntries;i++){
+            chartData.add(new Entry(0,0));
+        }
+
+        XAxis xAxis = chart1.getXAxis();
+        xAxis.setDrawLabels(false); // Disable X axis labels
+
+        YAxis leftAxis = chart1.getAxisLeft();
+        leftAxis.setDrawLabels(false); // Disable left Y axis labels
+        YAxis rightAxis = chart1.getAxisRight();
+        rightAxis.setDrawLabels(false); // Disable right Y axis labels
+        chart1.getDescription().setEnabled(false);
 
 
 
@@ -301,13 +330,13 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                     allBoardData.add((String.valueOf(gyroy.get(j))));
                                     allBoardData.add((String.valueOf(gyroz.get(j))));
 
-                                    allBoardData2[j][7*i] = (String.valueOf((time+10*j)));
-                                    allBoardData2[j][7*i+1] = ((String.valueOf(accelx.get(j))));
-                                    allBoardData2[j][7*i+2] = ((String.valueOf(accely.get(j))));
-                                    allBoardData2[j][7*i+3] = ((String.valueOf(accelx.get(j))));
-                                    allBoardData2[j][7*i+4] = ((String.valueOf(gyrox.get(j))));
-                                    allBoardData2[j][7*i+5] = ((String.valueOf(gyroy.get(j))));
-                                    allBoardData2[j][7*i+6] = ((String.valueOf(gyroz.get(j))));
+                                    allBoardData2[j][7*i] =  Float.parseFloat(String.valueOf(((time+10*j))));
+                                    allBoardData2[j][7*i+1] = Float.parseFloat((String.valueOf(accelx.get(j))));
+                                    allBoardData2[j][7*i+2] =  Float.parseFloat((String.valueOf(accely.get(j))));
+                                    allBoardData2[j][7*i+3] =  Float.parseFloat((String.valueOf(accelx.get(j))));
+                                    allBoardData2[j][7*i+4] =  Float.parseFloat((String.valueOf(gyrox.get(j))));
+                                    allBoardData2[j][7*i+5] =  Float.parseFloat((String.valueOf(gyroy.get(j))));
+                                    allBoardData2[j][7*i+6] =  Float.parseFloat((String.valueOf(gyroz.get(j))));
 
                                     }
 
@@ -345,6 +374,7 @@ public class DeviceOptionsActivity extends AppCompatActivity {
                                 }
 
                                 Log.d("wowza",String.valueOf(board0Data)+ String.valueOf(board9Data));
+
 
 
 
@@ -559,8 +589,8 @@ public class DeviceOptionsActivity extends AppCompatActivity {
         handler4.post(run4);
 
 // *******************************************************************************************************************
-        //async task 5: csv file and spinners
-
+        //async task 5: csv file
+/*
 
         final android.os.Handler handler5 = new Handler();
         Runnable run5 = new Runnable() {
@@ -572,17 +602,9 @@ public class DeviceOptionsActivity extends AppCompatActivity {
 
 
                 if(timerStatus==1){
-                    if(csvInProgress==0){
-                        try {
-                            writer = new CSVWriter(new FileWriter(file));
-                            csvInProgress=1;
-                           // String[] temp = {"time_board_0","accelx_board_0","accely_board_0","accelz_board_0","gyrox_board_0","gyroy_board_0","gyroz_board_0"};
-                           // writer.writeNext(temp);
+                    csvInProgress=1;
 
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            Log.d("csv","file not created");
-                        }
+
                     }else{
 
                         for(int j=0;j<numPackets;j++){
@@ -610,16 +632,93 @@ public class DeviceOptionsActivity extends AppCompatActivity {
             }
         };
         handler5.post(run5);
+*/
+// *******************************************************************************************************************
+
+
+        //async task 6: displaying charts
+        final android.os.Handler handler6 = new Handler();
+        Runnable run6 = new Runnable() {
+            @Override
+            public void run() {
+
+
+                    //float x = allBoardData2[chartIncrement][7*boardSelected];
+
+
+                    x=x+10;
+                    float y = allBoardData2[chartIncrement][7*boardSelected+(sensorSelected+1)];
+                    chartData.remove(0);
+                    chartData.add(new Entry(x,y));
+                    chartIncrement++;
+
+                    if(chartIncrement>9){
+                        chartIncrement=0;
+                    }
+
+                LineDataSet lineDataSet = new LineDataSet(chartData, (String) adapter.getItem(boardSelected)+": "+(String) adapter2.getItem(sensorSelected));
+                lineDataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+                List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
+                dataSets.add(lineDataSet);
+                LineData data = new LineData(dataSets);
+                chart1.setData(data);
+                chart1.invalidate();
+
+                if(parameterChanged==1){
+                    chartData.clear();
+                    for(float i=0;i<numChartEntries;i++){
+                        chartData.add(new Entry(0,0));
+                    }
+                    parameterChanged=0;
+
+                }
+
+                handler6.postDelayed(this, timeDly/numPackets);//running task
+            }
+        };
+        handler6.post(run6);
 
 // *******************************************************************************************************************
 
 
+    }
 
+    public void createCsvFile(String fileName, List<String[]> dataList) {
+        String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+        String filePath = baseDir + File.separator + fileName;
+        File f = new File(filePath);
 
-
+        try {
+            FileWriter writer = new FileWriter(f);
+            CSVWriter csvWriter = new CSVWriter(writer);
+            csvWriter.writeAll(dataList);
+            csvWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        switch (adapterView.getId()) {
+            case R.id.spinner1:
+                boardSelected = i;
+                Log.d("coco","Board Selected: "+boardSelected);
+                parameterChanged=1;
+                break;
+            case R.id.spinner2:
+                sensorSelected = i;
+                Log.d("coco","Sensor Selected: "+sensorSelected);
+                parameterChanged=1;
+                break;
 
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
 }
 
