@@ -2,15 +2,12 @@ package com.example.uwowirelessmotionsensortrackingapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.bluetooth.BluetoothClass;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -31,7 +28,6 @@ import com.android.volley.toolbox.Volley;
 import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
 import com.example.uwowirelessmotionsensortrackingapp.params.FixedParameters;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -51,7 +47,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -80,6 +75,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
     int id;
     ArrayList<String> allBoardData = new ArrayList<>();
     float[][] allBoardData2 = new float[numPackets][7*numBoards];
+    String[][] allBoardData3 = new String[numPackets][7*numBoards];
     ArrayList<String> board0Data = new ArrayList<>();
     ArrayList<String> board1Data = new ArrayList<>();
     ArrayList<String> board2Data = new ArrayList<>();
@@ -96,7 +92,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
     int chartIncrement=0;
     int parameterChanged = 0;
     float x = 0;
-    float numChartEntries=200;
+    float numChartEntries=700;
 
     //other variables
     String statusString = "Not Connected";
@@ -288,7 +284,6 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
         int[] statusCounter = new int[numBoards];
         int[] prevTime = new int[numBoards];
         int[] currentTime = new int[numBoards];
-
 //*******************************************************************************************************************
         //async task 1: get and store JSON data
         final android.os.Handler handler = new Handler();
@@ -359,7 +354,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
                                     allBoardData2[j][7*i+5] =  Float.parseFloat((String.valueOf(gyroy.get(j))));
                                     allBoardData2[j][7*i+6] =  Float.parseFloat((String.valueOf(gyroz.get(j))));
 
-                                    }
+                                }
 
                                 switch(i){
                                     case 0:
@@ -552,7 +547,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
                         Log.d("courtney", "pingTest Completed. Duration: " + pingDuration);
                         pingCounter = 0;
                         //status update - second textview
-                        String temp2 = "Ping Duration: " + pingDuration/3 + "ms" + "\n"
+                        String temp2 = "Ping Duration: " + pingDuration + "ms" + "\n"
                                 + "Session Duration:";
                         pingTestView.setText(temp2);
                     }
@@ -612,31 +607,18 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
 // *******************************************************************************************************************
         //async task 5: csv file
 /*
-
         final android.os.Handler handler5 = new Handler();
         Runnable run5 = new Runnable() {
             @Override
             public void run() {
-
-
-
-
-
                 if(timerStatus==1){
                     csvInProgress=1;
-
-
                     }else{
-
                         for(int j=0;j<numPackets;j++){
                             String temp[] = allBoardData2[j];
                             writer.writeNext(temp);
                         }
-
-
                     }
-
-
                 }else{
                     if(csvInProgress==1){
                         try {
@@ -648,7 +630,6 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
                         csvInProgress=0;
                     }
                 }
-
                 handler5.postDelayed(this, timeDly);//running task
             }
         };
@@ -664,19 +645,27 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
             public void run() {
 
 
-                    //float x = allBoardData2[chartIncrement][7*boardSelected];
+                //float x = allBoardData2[chartIncrement][7*boardSelected];
 
 
                 for(int j=0;j<numPackets;j++){
-                    x = x+10;
+                    float x = allBoardData2[j][7*boardSelected];
                     float y = allBoardData2[j][7*boardSelected+(sensorSelected+1)];
                     chartData.remove(0);
                     chartData.add(new Entry(x,y));
 
                 }
 
-
-
+                LineDataSet lineDataSet = new LineDataSet(chartData, (String) adapter.getItem(boardSelected)+": "+(String) adapter2.getItem(sensorSelected));
+                lineDataSet.setDrawValues(false);
+                lineDataSet.setDrawCircles(false);
+                lineDataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+                List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
+                dataSets.add(lineDataSet);
+                LineData data = new LineData(dataSets);
+                chart1.setData(data);
+                chart1.animateXY(10,10 );
+                chart1.invalidate();
 
                 if(parameterChanged==1){
                     chartData.clear();
@@ -686,19 +675,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
                     parameterChanged=0;
 
                 }
-                LineDataSet lineDataSet = new LineDataSet(chartData, (String) adapter.getItem(boardSelected)+": "+(String) adapter2.getItem(sensorSelected));
-                lineDataSet.setDrawCircles(false);
-                lineDataSet.setDrawValues(false);
-                lineDataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
-                List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
-                dataSets.add(lineDataSet);
-                LineData data = new LineData(dataSets);
 
-
-
-
-                chart1.setData(data);
-                chart1.invalidate();
                 handler6.postDelayed(this, timeDly);//running task
             }
         };
@@ -747,4 +724,3 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
 
     }
 }
-

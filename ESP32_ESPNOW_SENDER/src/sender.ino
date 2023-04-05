@@ -1,23 +1,42 @@
 #include "headers.h"
 
-
-
-
-LSM6DSO myIMU; //Default constructor is I2C, addr 0x6B
-
 // receiver's mac address
 // uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x3D, 0xD3, 0xD8};
 // uint8_t broadcastAddress[] = {0xf0, 0x08, 0xd1, 0xd4, 0x56, 0x14};
 // uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x30, 0xa0, 0x90};
 uint8_t broadcastAddress[] = {0xa4, 0xcf, 0x12, 0x04, 0xe3, 0xe4};
-int mcuID = 1; // id goes from 0 to 5
+int mcuID = 0; // id goes from 0 to 5
 
 // initializing time
-
+LSM6DSO myIMU;             // Default constructor is I2C, addr 0x6B
 const int packetSize = 10; // amount of sensor readings being sent within each packet
 // transfer rate = packetSize*10 (ms) - 100ms (current)
 // transfer rate = 1/(packetSize*10/1000) (Hz) - 10Hz (current)
 // keep in mind this still sends data equivalent to 100Hz
+
+// defining the sample rate for every sensor reading
+unsigned long long cm = 0;
+unsigned long long pm = 0;
+int interval = 10; // 10 ms interval for 100 hz
+int counter = 0;   // variable to sequentially store packets as fixed packet sizes
+
+// initializing status led
+int ledPin1 = 12;
+int ledStatus1 = false;
+
+// function to toggle LED pin 2
+void toggleLED()
+{
+  if (ledStatus1 == true)
+  {
+    ledStatus1 = false;
+  }
+  else
+  {
+    ledStatus1 = true;
+  }
+  digitalWrite(ledPin1, ledStatus1);
+}
 
 // Must match the sender structure
 typedef struct struct_message
@@ -38,94 +57,70 @@ struct_message myData;
 // Create peer interface
 esp_now_peer_info_t peerInfo;
 
-typedef struct struct_signal
-{
-  int time;
-} struct_signal;
-
-struct_signal resetSig;
-
-float accelx=0;
-  float accely=0;
-  float accelz=0;
-  float gyrox=0;
-  float gyroy=0;
-  float gyroz=0;
-
-// defining the sample rate for every sensor reading
-unsigned long long cm = 0;
-unsigned long long pm = 0;
-int interval = 10; // 10 ms interval for 100 hz
-int counter = 0;   // variable to sequentially store packets as fixed packet sizes
-unsigned long long prevTime=0;
-
-unsigned long long cm2 = 0;
-unsigned long long pm2 = 0;
-int interval2 = 10; // 10 ms interval for 100 hz
-int counter2 = 0;
-int reset1 = 0; // 0 = waiting for signal, 1 = signal received
-
-// initializing status led
-int ledPin1 = 2;
-int ledStatus1 = false;
-
-// function to toggle LED pin 2
-void toggleLED()
-{
-  if (ledStatus1 == true)
-  {
-    ledStatus1 = false;
-  }
-  else
-  {
-    ledStatus1 = true;
-  }
-  digitalWrite(ledPin1, ledStatus1);
-}
-
 // callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-  Serial.print("\r\nLast Packet Send Status:\t");
+  // Serial.print("\r\nLast Packet Send Status:\t");
 
   if (status == ESP_NOW_SEND_SUCCESS)
   {
-    Serial.println("Delivery Success");
+    // Serial.println("Delivery Success");
     toggleLED();
   }
   else
   {
     // turning off LED
-    Serial.println("Delivery Fail");
+    // Serial.println("Delivery Fail");
     ledStatus1 = false;
     digitalWrite(ledPin1, ledStatus1);
   }
 
   // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
-void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
-{
-  memcpy(&resetSig, incomingData, sizeof(resetSig));
-  Serial.print("Bytes received: ");
-  Serial.println(len);
-  Serial.print("time ");
-  Serial.println(resetSig.time);
- 
-    prevTime = millis();
-    pm=0;
-  
-}
 
-
+//********************************************************************************************
+// LSM6DS3 myIMU; //Default constructor is I2C, addr 0x6B
+//********************************************************************************************
 
 void setup()
 {
- 
- 
-  Wire.begin(23,22);
+  Wire.begin(23, 22);
   myIMU.begin();
-  myIMU.initialize(BASIC_SETTINGS);
-   
+  myIMU.initialize(SOFT_INT_SETTINGS);
+  //********************************************************************************************
+  // myIMU.settings.gyroEnabled = 1;  //Can be 0 or 1
+  // myIMU.settings.gyroRange = 2000;   //Max deg/s.  Can be: 125, 245, 500, 1000, 2000
+  // myIMU.settings.gyroSampleRate = 1666;   //Hz.  Can be: 13, 26, 52, 104, 208, 416, 833, 1666
+  // myIMU.settings.gyroBandWidth = 200;  //Hz.  Can be: 50, 100, 200, 400;
+  // myIMU.settings.gyroFifoEnabled = 0;  //Set to include gyro in FIFO
+  // myIMU.settings.gyroFifoDecimation = 1;  //set 1 for on /1
+
+  // myIMU.settings.accelEnabled = 1;
+  // myIMU.settings.accelRange = 16;      //Max G force readable.  Can be: 2, 4, 8, 16
+  // myIMU.settings.accelSampleRate = 1666;  //Hz.  Can be: 13, 26, 52, 104, 208, 416, 833, 1666, 3332, 6664, 13330
+  // myIMU.settings.accelBandWidth = 200;  //Hz.  Can be: 50, 100, 200, 400;
+  // myIMU.settings.accelFifoEnabled = 0;  //Set to include accelerometer in the FIFO
+  // myIMU.settings.accelFifoDecimation = 1;  //set 1 for on /1
+  // myIMU.settings.tempEnabled = 1;
+
+  //   //Non-basic mode settings
+  // myIMU.settings.commMode = 1;
+
+  // //FIFO control settings
+  // myIMU.settings.fifoThreshold = 100;  //Can be 0 to 4096 (16 bit bytes)
+  // myIMU.settings.fifoSampleRate = 50;  //Hz.  Can be: 10, 25, 50, 100, 200, 400, 800, 1600, 3300, 6600
+  // myIMU.settings.fifoModeWord = 0;  //FIFO mode.
+  // //FIFO mode.  Can be:
+  // //  0 (Bypass mode, FIFO off)
+  // //  1 (Stop when full)
+  // //  3 (Continuous during trigger)
+  // //  4 (Bypass until trigger)
+  // //  6 (Continous mode)
+
+  // //Call .begin() to configure the IMU
+  // myIMU.begin();
+
+  //********************************************************************************************
 
   // Init Serial Monitor
   Serial.begin(115200);
@@ -157,61 +152,77 @@ void setup()
     Serial.println("Failed to add peer");
     return;
   }
-
-  esp_now_register_recv_cb(OnDataRecv);
 }
 
 //********************************************************************************************
-float accelxVal(float data)
+float accelxVal()
 {
-  return data;
+  return (float)(rand());
 }
-float accelyVal(float data)
+float accelyVal()
 {
-  return data;
+  return (float)(rand());
 }
-float accelzVal(float data)
+float accelzVal()
 {
-  return data;
+  return (float)(rand());
 }
-float gyroxVal(float data)
+float gyroxVal()
 {
-  return data;
+  return (float)(rand());
 }
-float gyroyVal(float data)
+float gyroyVal()
 {
-  return data;
+  return (float)(rand());
 }
-float gyrozVal(float data)
+float gyrozVal()
 {
-  return data;
+  return (float)(rand());
 }
 //********************************************************************************************
 
+int data = 0;
+int i = 0;
 
-
-void sendingSensorData()
+void loop()
 {
+  data = myIMU.listenDataReady();
+
   if (counter == 0)
   {
     myData.time = pm;
   }
 
+  cm = millis();
   if ((cm - pm) >= interval)
   {
-    
     pm = cm;
     // update data
     myData.id = mcuID;
 
     //********************************************************************************************
-    myData.accelx[counter] = accelx;
-    myData.accely[counter] = accely;
-    myData.accelz[counter] = accelz;
-    myData.gyrox[counter] = gyrox;
-    myData.gyroy[counter] = gyroy;
-    myData.gyroz[counter] = gyroz;
+    myData.accelx[counter] = myIMU.readFloatAccelX();
+    myData.accely[counter] = myIMU.readFloatAccelY();
+    myData.accelz[counter] = myIMU.readFloatAccelZ();
+    myData.gyrox[counter] = myIMU.readFloatGyroX();
+    myData.gyroy[counter] = myIMU.readFloatGyroY();
+    myData.gyroz[counter] = sin(((float)i) * PI / 180);
+
+    //  myData.accelx[counter] = accelxVal();
+    //   myData.accely[counter] = accelyVal();
+    //   myData.accelz[counter] = accelzVal();
+    //   myData.gyrox[counter] = gyroxVal();
+    //   myData.gyroy[counter] = gyroyVal();
+    //   myData.gyroz[counter] = gyrozVal();
     //********************************************************************************************
+
+    Serial.println(myData.gyroz[counter]);
+
+    i++;
+    if (i >= 360)
+    {
+      i = 0;
+    }
     counter++; // incrementing counter within the loop signifying that an interval of 10 ms has passed
   }
 
@@ -224,30 +235,11 @@ void sendingSensorData()
 
     if (result == ESP_OK)
     {
-     // Serial.println("Sent with success");
+      // Serial.println("Sent with success");
     }
     else
     {
-     // Serial.println("Error sending the data");
+      // Serial.println("Error sending the data");
     }
   }
 }
-
-void loop()
-{
-
-
-  accelx = myIMU.readFloatAccelX();
-  accely = myIMU.readFloatAccelY();
-  accelz = myIMU.readFloatAccelZ();
-  gyrox = myIMU.readFloatGyroX();
-  gyroy = myIMU.readFloatGyroY();
-  gyroz = myIMU.readFloatGyroZ();
-
-
-  cm = millis()- prevTime ;
-  cm2 = millis();
-  sendingSensorData();
-
-}
-
