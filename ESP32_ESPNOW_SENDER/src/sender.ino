@@ -1,6 +1,10 @@
 #include "headers.h"
 
 
+
+
+LSM6DSO myIMU; //Default constructor is I2C, addr 0x6B
+
 // receiver's mac address
 // uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x3D, 0xD3, 0xD8};
 // uint8_t broadcastAddress[] = {0xf0, 0x08, 0xd1, 0xd4, 0x56, 0x14};
@@ -40,6 +44,13 @@ typedef struct struct_signal
 } struct_signal;
 
 struct_signal resetSig;
+
+float accelx=0;
+  float accely=0;
+  float accelz=0;
+  float gyrox=0;
+  float gyroy=0;
+  float gyroz=0;
 
 // defining the sample rate for every sensor reading
 unsigned long long cm = 0;
@@ -105,46 +116,16 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
   
 }
 
-//********************************************************************************************
-// LSM6DS3 myIMU; //Default constructor is I2C, addr 0x6B
-//********************************************************************************************
+
 
 void setup()
 {
-  //********************************************************************************************
-  // myIMU.settings.gyroEnabled = 1;  //Can be 0 or 1
-  // myIMU.settings.gyroRange = 2000;   //Max deg/s.  Can be: 125, 245, 500, 1000, 2000
-  // myIMU.settings.gyroSampleRate = 1666;   //Hz.  Can be: 13, 26, 52, 104, 208, 416, 833, 1666
-  // myIMU.settings.gyroBandWidth = 200;  //Hz.  Can be: 50, 100, 200, 400;
-  // myIMU.settings.gyroFifoEnabled = 0;  //Set to include gyro in FIFO
-  // myIMU.settings.gyroFifoDecimation = 1;  //set 1 for on /1
-
-  // myIMU.settings.accelEnabled = 1;
-  // myIMU.settings.accelRange = 16;      //Max G force readable.  Can be: 2, 4, 8, 16
-  // myIMU.settings.accelSampleRate = 1666;  //Hz.  Can be: 13, 26, 52, 104, 208, 416, 833, 1666, 3332, 6664, 13330
-  // myIMU.settings.accelBandWidth = 200;  //Hz.  Can be: 50, 100, 200, 400;
-  // myIMU.settings.accelFifoEnabled = 0;  //Set to include accelerometer in the FIFO
-  // myIMU.settings.accelFifoDecimation = 1;  //set 1 for on /1
-  // myIMU.settings.tempEnabled = 1;
-
-  //   //Non-basic mode settings
-  // myIMU.settings.commMode = 1;
-
-  // //FIFO control settings
-  // myIMU.settings.fifoThreshold = 100;  //Can be 0 to 4096 (16 bit bytes)
-  // myIMU.settings.fifoSampleRate = 50;  //Hz.  Can be: 10, 25, 50, 100, 200, 400, 800, 1600, 3300, 6600
-  // myIMU.settings.fifoModeWord = 0;  //FIFO mode.
-  // //FIFO mode.  Can be:
-  // //  0 (Bypass mode, FIFO off)
-  // //  1 (Stop when full)
-  // //  3 (Continuous during trigger)
-  // //  4 (Bypass until trigger)
-  // //  6 (Continous mode)
-
-  // //Call .begin() to configure the IMU
-  // myIMU.begin();
-
-  //********************************************************************************************
+ 
+ 
+  Wire.begin(23,22);
+  myIMU.begin();
+  myIMU.initialize(BASIC_SETTINGS);
+   
 
   // Init Serial Monitor
   Serial.begin(115200);
@@ -181,29 +162,29 @@ void setup()
 }
 
 //********************************************************************************************
-float accelxVal()
+float accelxVal(float data)
 {
-  return (float)(rand());
+  return data;
 }
-float accelyVal()
+float accelyVal(float data)
 {
-  return (float)(rand());
+  return data;
 }
-float accelzVal()
+float accelzVal(float data)
 {
-  return (float)(rand());
+  return data;
 }
-float gyroxVal()
+float gyroxVal(float data)
 {
-  return (float)(rand());
+  return data;
 }
-float gyroyVal()
+float gyroyVal(float data)
 {
-  return (float)(rand());
+  return data;
 }
-float gyrozVal()
+float gyrozVal(float data)
 {
-  return (float)(rand());
+  return data;
 }
 //********************************************************************************************
 
@@ -224,19 +205,12 @@ void sendingSensorData()
     myData.id = mcuID;
 
     //********************************************************************************************
-    // myData.accelx[counter] = myIMU.readFloatAccelX();
-    // myData.accely[counter] = myIMU.readFloatAccelY();
-    // myData.accelz[counter] = myIMU.readFloatAccelZ();
-    // myData.gyrox[counter] = myIMU.readFloatGyroX();
-    // myData.gyroy[counter] = myIMU.readFloatGyroY();
-    // myData.gyroz[counter] = myIMU.readFloatGyroZ();
-
-    myData.accelx[counter] = accelxVal();
-    myData.accely[counter] = accelyVal();
-    myData.accelz[counter] = accelzVal();
-    myData.gyrox[counter] = gyroxVal();
-    myData.gyroy[counter] = gyroyVal();
-    myData.gyroz[counter] = gyrozVal();
+    myData.accelx[counter] = accelx;
+    myData.accely[counter] = accely;
+    myData.accelz[counter] = accelz;
+    myData.gyrox[counter] = gyrox;
+    myData.gyroy[counter] = gyroy;
+    myData.gyroz[counter] = gyroz;
     //********************************************************************************************
     counter++; // incrementing counter within the loop signifying that an interval of 10 ms has passed
   }
@@ -261,6 +235,16 @@ void sendingSensorData()
 
 void loop()
 {
+
+
+  accelx = myIMU.readFloatAccelX();
+  accely = myIMU.readFloatAccelY();
+  accelz = myIMU.readFloatAccelZ();
+  gyrox = myIMU.readFloatGyroX();
+  gyroy = myIMU.readFloatGyroY();
+  gyroz = myIMU.readFloatGyroZ();
+
+
   cm = millis()- prevTime ;
   cm2 = millis();
   sendingSensorData();

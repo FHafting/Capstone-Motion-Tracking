@@ -11,7 +11,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="@+id/chronometer"
-        app:layout_constraintTop_toBottomOf="@id/chronometer" />
+        app:layout_constraintTop_toBottomOf="@id/chronometer"
+        />
     <Spinner
         android:id="@+id/spinner2"
         android:layout_width="wrap_content"
@@ -22,16 +23,16 @@
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/line_chart"
         android:layout_width="match_parent"
-        android:gravity="center"
+        android:layout_height="0dp"
         android:orientation="vertical"
-        android:layout_height="350dp"
+        app:layout_constraintBottom_toTopOf="@+id/x_label"
         app:layout_constraintTop_toBottomOf="@id/spinner1"></com.github.mikephil.charting.charts.LineChart>
 
 
     <TextView
         android:id="@+id/ip_address"
         android:layout_width="280dp"
-        android:layout_height="120dp"
+        android:layout_height="100sp"
         android:layout_marginStart="10sp"
         android:textColor="@color/black"
         android:textSize="20sp"
@@ -40,7 +41,7 @@
 
     <TextView
         android:id="@+id/ping_test"
-        android:layout_height="75dp"
+        android:layout_height="50sp"
         android:layout_marginStart="10sp"
         android:layout_marginEnd="23dp"
         android:textColor="@color/black"
@@ -75,22 +76,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="20dp"
+        app:layout_constraintEnd_toEndOf="@+id/start_btn"
         android:text="reset"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/ping_test"
         app:layout_constraintTop_toBottomOf="@+id/start_btn" />
 
-
+    <TextView
+        android:id="@+id/x_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:text="time(ms)"
+        app:layout_constraintBottom_toTopOf="@+id/download_btn" />
 
     <Button
         android:id="@+id/download_btn"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Save Data (.CSV)"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/line_chart" />
+        app:layout_constraintBottom_toBottomOf="parent"
+         />
 
 
 

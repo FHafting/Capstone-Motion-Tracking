@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.bluetooth.BluetoothClass;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -30,6 +31,8 @@ import com.android.volley.toolbox.Volley;
 import com.example.uwowirelessmotionsensortrackingapp.data.MyDbHandler;
 import com.example.uwowirelessmotionsensortrackingapp.params.FixedParameters;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -56,7 +59,7 @@ import java.util.Map;
 public class DeviceOptionsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
     //declarations
-    TextView ipAddressView, test1view, pingTestView;
+    TextView ipAddressView, test1view, pingTestView, xlabel;
     Button start, reset, download, history;
     Spinner boardSelect, sensorSelect;
     LineChart chart1;
@@ -93,7 +96,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
     int chartIncrement=0;
     int parameterChanged = 0;
     float x = 0;
-    float numChartEntries=500;
+    float numChartEntries=200;
 
     //other variables
     String statusString = "Not Connected";
@@ -147,7 +150,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
         reset = findViewById(R.id.reset_btn);
         download = findViewById(R.id.download_btn);
         chart1 = findViewById(R.id.line_chart);
-
+        xlabel = findViewById(R.id.x_label);
         pingTestView = findViewById(R.id.ping_test);
 
 
@@ -212,15 +215,33 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
             chartData.add(new Entry(0,0));
         }
 
+
         XAxis xAxis = chart1.getXAxis();
-        xAxis.setDrawLabels(false); // Disable X axis labels
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextColor(Color.WHITE);
+
+
 
         YAxis leftAxis = chart1.getAxisLeft();
-        leftAxis.setDrawLabels(false); // Disable left Y axis labels
+        leftAxis.setTextColor(Color.WHITE);
+
+//        leftAxis.setDrawLabels(false); // Disable left Y axis labels
         YAxis rightAxis = chart1.getAxisRight();
         rightAxis.setDrawLabels(false); // Disable right Y axis labels
         chart1.getDescription().setEnabled(false);
+        chart1.setBackgroundColor(0xff000000);
+        chart1.setDrawBorders(true);
 
+
+        Legend legend = chart1.getLegend();
+        legend.setEnabled(true);
+        legend.setTextColor(Color.WHITE);
+        legend.setTextSize(15);
+        legend.setForm(Legend.LegendForm.LINE);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER); // Set the horizontal alignment of the legend to the center
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP); // Set the vertical alignment of the legend to the top
+
+        xlabel.setBackgroundColor(0xff000000);
 
 
         //buttons here
@@ -531,7 +552,7 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
                         Log.d("courtney", "pingTest Completed. Duration: " + pingDuration);
                         pingCounter = 0;
                         //status update - second textview
-                        String temp2 = "Ping Duration: " + pingDuration + "ms" + "\n"
+                        String temp2 = "Ping Duration: " + pingDuration/3 + "ms" + "\n"
                                 + "Session Duration:";
                         pingTestView.setText(temp2);
                     }
@@ -646,23 +667,16 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
                     //float x = allBoardData2[chartIncrement][7*boardSelected];
 
 
-                    x=x+10;
-                    float y = allBoardData2[chartIncrement][7*boardSelected+(sensorSelected+1)];
+                for(int j=0;j<numPackets;j++){
+                    x = x+10;
+                    float y = allBoardData2[j][7*boardSelected+(sensorSelected+1)];
                     chartData.remove(0);
                     chartData.add(new Entry(x,y));
-                    chartIncrement++;
 
-                    if(chartIncrement>9){
-                        chartIncrement=0;
-                    }
+                }
 
-                LineDataSet lineDataSet = new LineDataSet(chartData, (String) adapter.getItem(boardSelected)+": "+(String) adapter2.getItem(sensorSelected));
-                lineDataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
-                List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
-                dataSets.add(lineDataSet);
-                LineData data = new LineData(dataSets);
-                chart1.setData(data);
-                chart1.invalidate();
+
+
 
                 if(parameterChanged==1){
                     chartData.clear();
@@ -672,8 +686,20 @@ public class DeviceOptionsActivity extends AppCompatActivity implements AdapterV
                     parameterChanged=0;
 
                 }
+                LineDataSet lineDataSet = new LineDataSet(chartData, (String) adapter.getItem(boardSelected)+": "+(String) adapter2.getItem(sensorSelected));
+                lineDataSet.setDrawCircles(false);
+                lineDataSet.setDrawValues(false);
+                lineDataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+                List<ILineDataSet> dataSets = new ArrayList<ILineDataSet>();
+                dataSets.add(lineDataSet);
+                LineData data = new LineData(dataSets);
 
-                handler6.postDelayed(this, timeDly/numPackets);//running task
+
+
+
+                chart1.setData(data);
+                chart1.invalidate();
+                handler6.postDelayed(this, timeDly);//running task
             }
         };
         handler6.post(run6);

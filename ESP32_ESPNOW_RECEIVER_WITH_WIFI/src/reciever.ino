@@ -100,7 +100,7 @@ void toggleLED()
 
 void setup()
 {
-   // initialise status led
+  // initialise status led
   pinMode(ledPin1, OUTPUT);
   // Serial port for debugging purposes
   Serial.begin(115200);
@@ -136,30 +136,49 @@ void setup()
   server.begin();
 }
 
+int i = 0;
+unsigned long int cm5 = 0;
+unsigned long int pm5 = 0;
+unsigned long int interval5 = 10;
 void loop()
 {
   cm = millis();
   dataRateDisplay();
 
-  pingTest();       //pinging the ESP32 Wifi from the android app 
-  resettingTime();  //resets time in all esp 32 senders every 60 seconds
+  pingTest();      // pinging the ESP32 Wifi from the android app
+  resettingTime(); // resets time in all esp 32 senders every 60 seconds
+
+  cm5 = millis();
+
+  if (cm - pm >= interval)
+  {
+    Serial.println(boardsStruct[myData.id].accelx[i]);
+    i++;
+
+    if (i > 9)
+    {
+      i = 0;
+    }
+  }
 }
 
 void resettingTime()
 {
+
   if (cm - pm3 > interval3)
   {
-    pm3=cm;
+
+    pm3 = cm;
     resetSig.time = 1;
     esp_err_t result = esp_now_send(0, (uint8_t *)&resetSig, sizeof(struct_signal));
 
     if (result == ESP_OK)
     {
-      Serial.println("Sent time with success");
+      //Serial.println("Sent time with success");
     }
     else
     {
-      Serial.println("Error sending the data");
+     // Serial.println("Error sending the data");
     }
   }
 }
@@ -169,7 +188,7 @@ void pingTest()
   if ((cm - pm2) >= interval2)
   {
     pm2 = cm;
-    Serial.println(incomingMessage);
+    //Serial.println(incomingMessage);
 
     if (incomingMessage != "")
     {
@@ -210,7 +229,7 @@ void dataRateDisplay()
   if ((cm - pm) >= interval)
   {
     dataRate = (packetCount / (interval / 1000));
-    Serial.println(dataRate);
+    //Serial.println(dataRate);
 
     pm = cm;
     packetCount = 0;
@@ -249,17 +268,17 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len)
 // callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
- Serial.print("\r\nLast Packet Send Status:\t");
+  Serial.print("\r\nLast Packet Send Status:\t");
 
   if (status == ESP_NOW_SEND_SUCCESS)
   {
-    Serial.println("Delivery Success");
+    //Serial.println("Delivery Success");
     toggleLED();
   }
   else
   {
     // turning off LED
-    Serial.println("Delivery Fail");
+    //Serial.println("Delivery Fail");
     ledStatus1 = false;
     digitalWrite(ledPin1, ledStatus1);
   }
@@ -304,7 +323,7 @@ void wifiSetup()
 {
   // Connect to Wi-Fi
   WiFi.softAP(ssidAP, passwordAP);
-  Serial.println(WiFi.softAPIP());
+  //Serial.println(WiFi.softAPIP());
 }
 
 // establishing function for data transmission through wifi (JSON Code here)
