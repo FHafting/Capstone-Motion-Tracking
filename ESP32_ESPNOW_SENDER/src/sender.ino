@@ -3,16 +3,73 @@
 // receiver's mac address
 // uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x3D, 0xD3, 0xD8};
 // uint8_t broadcastAddress[] = {0xf0, 0x08, 0xd1, 0xd4, 0x56, 0x14};
-// uint8_t broadcastAddress[] = {0x3C, 0x61, 0x05, 0x30, 0xa0, 0x90};
-uint8_t broadcastAddress[] = {0xa4, 0xcf, 0x12, 0x04, 0xe3, 0xe4};
-int mcuID = 0; // id goes from 0 to 5
+//40:22:D8:6A:C4:34
+
+ uint8_t broadcastAddress[] = {0x40, 0x22, 0xD8, 0x6A, 0xC4, 0x34};
+
+//uint8_t broadcastAddress[] = {0xa4, 0xcf, 0x12, 0x04, 0xe3, 0xe4};
+int mcuID = 0 ; // id goes from 0 to 9
 
 // initializing time
-LSM6DSO myIMU;             // Default constructor is I2C, addr 0x6B
+// LSM6DSO myIMU;             // Default constructor is I2C, addr 0x6B
 const int packetSize = 10; // amount of sensor readings being sent within each packet
 // transfer rate = packetSize*10 (ms) - 100ms (current)
 // transfer rate = 1/(packetSize*10/1000) (Hz) - 10Hz (current)
 // keep in mind this still sends data equivalent to 100Hz
+
+//***********************************************************************************************************************
+
+#define LED1 13
+#define LED2 14
+#define LED3 15
+// #define LED4 12
+
+uint8_t LED_level = 0b0101;
+
+#define motorPin 25
+int pulses = 4;
+int pulseNum = 1;
+bool motorState = 1;
+bool pulseMotor = false;
+long lastPulseTime = 0;
+int pulseDuration = 400;
+
+// after vibration motor, wait for device to stabilize
+bool tapEnable = true;
+bool settle = false;
+int pulseSettleDuration = 200;
+long pulseSettleStart = 0;
+
+LSM6DSO myIMU;
+
+// Interrupt variables
+#define int1Pin 21 // Use pin 2 for int.0 on uno
+uint8_t int1Status = 0;
+uint8_t TAP_SRC_REGISTER = 0;
+
+void IRAM_ATTR int1ISR()
+{
+  // Serial.println("Interrupt serviced.");
+  int1Status++;
+}
+
+void setLEDs(uint8_t LED_level){
+  digitalWrite(LED1, LOW);
+  digitalWrite(LED2, LOW);
+  digitalWrite(LED3, LOW);
+  //digitalWrite(LED4, LOW);
+  
+  if(LED_level & 0b1)
+    digitalWrite(LED1, HIGH);
+  if(LED_level & 0b10)
+    digitalWrite(LED2, HIGH);
+  if(LED_level & 0b100)
+    digitalWrite(LED3, HIGH);
+  //if(LED_level & 0b1000)
+   // digitalWrite(LED4, HIGH);
+}
+
+//***********************************************************************************************************************
 
 // defining the sample rate for every sensor reading
 unsigned long long cm = 0;
@@ -84,9 +141,38 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 
 void setup()
 {
+
+  
+
   Wire.begin(23, 22);
   myIMU.begin();
   myIMU.initialize(SOFT_INT_SETTINGS);
+
+  //*******************************************************************************************************************
+  
+  uint8_t errorAccumulator = 0;
+  
+  errorAccumulator += myIMU.writeRegister(CTRL1_XL, 0x60);
+  errorAccumulator += myIMU.writeRegister(TAP_CFG0, 0x0E);
+  errorAccumulator += myIMU.writeRegister(TAP_CFG1, 0x0C);
+  errorAccumulator += myIMU.writeRegister(TAP_CFG2, 0x8C);
+  errorAccumulator += myIMU.writeRegister(TAP_THS_6D, 0x0C);
+  errorAccumulator += myIMU.writeRegister(INT_DUR2, 0x7F);
+  errorAccumulator += myIMU.writeRegister(WAKE_UP_THS, 0x80);
+  errorAccumulator += myIMU.writeRegister(MD2_CFG, 0x08);
+
+  //Configure the atmega interrupt pin
+  pinMode(int1Pin, INPUT);
+  attachInterrupt(int1Pin, int1ISR, RISING);
+
+  pinMode(motorPin, OUTPUT);
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(LED3, OUTPUT);
+  //pinMode(LED4, OUTPUT);
+  setLEDs(LED_level);
+
+  //*******************************************************************************************************************
   //********************************************************************************************
   // myIMU.settings.gyroEnabled = 1;  //Can be 0 or 1
   // myIMU.settings.gyroRange = 2000;   //Max deg/s.  Can be: 125, 245, 500, 1000, 2000
@@ -240,6 +326,48 @@ void loop()
     else
     {
       // Serial.println("Error sending the data");
+    }
+  }
+
+
+
+  // put your main code here, to run repeatedly:
+  if(pulseMotor){
+    if(millis() - lastPulseTime >= pulseDuration){
+      lastPulseTime = millis();
+      motorState ^= 0b1;
+      digitalWrite(motorPin, motorState);
+      LED_level ^= 0b1111;
+      setLEDs(LED_level);
+      pulseNum++;
+    }
+    if(pulseNum >= pulses){
+      pulseMotor = false;
+      settle = true;
+      pulseSettleStart = millis();
+      pulseNum = 1;
+    }
+  }
+  if(settle){
+    if(millis() - pulseSettleStart >= pulseSettleDuration){
+      settle = false;
+      tapEnable = true;
+    }
+  }
+  if( int1Status > 0 && tapEnable)  //If ISR has been serviced at least once
+  {
+    myIMU.readRegister(&TAP_SRC_REGISTER, TAP_SRC);
+    if(TAP_SRC_REGISTER && 0x10){   //only double taps
+      Serial.print("Double-tap event\n");
+      LED_level ^= 0b1111;
+      setLEDs(LED_level);
+      //Clear the ISR counter
+      int1Status = 0;
+      tapEnable = false;
+      pulseMotor = true;
+      motorState = 1;
+      digitalWrite(motorPin, motorState);
+      lastPulseTime = millis();
     }
   }
 }
